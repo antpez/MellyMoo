@@ -1,10 +1,46 @@
 {
   "expo": {
-    "scheme": "acme",
+    "name": "Melly Moo",
+    "slug": "melly-moo",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "mellymoo",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/images/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#7A4CFF"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.mellymoo.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#7A4CFF"
+      },
+      "package": "com.mellymoo.app",
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
     "plugins": [
       "expo-router"
     ],
-    "name": "MellyMoo",
-    "slug": "MellyMoo"
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "melly-moo-project"
+      }
+    }
   }
 }
