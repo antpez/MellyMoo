@@ -3,6 +3,7 @@ import { Bubble, BubbleColor, BubbleController, BubbleType } from '../components
 export type SpawnConfig = {
   interval: number; // ms between spawns
   speed: number; // px/s upward velocity
+  sizeChances: { small: number; medium: number; large: number };
   probabilities: {
     color: number;
     item: number;
@@ -33,13 +34,25 @@ export class BubbleSpawner {
     const newBubbles: Bubble[] = [];
     
     // Check if it's time to spawn
-    const timeSinceLastSpawn = currentTime - this.lastSpawnTime;
-    if (timeSinceLastSpawn >= this.config.interval) {
-      const bubble = this.spawnBubble();
-      if (bubble) {
-        newBubbles.push(bubble);
-      }
+    let timeSinceLastSpawn = currentTime - this.lastSpawnTime;
+
+    // If the screen is empty, guarantee at least one bubble immediately
+    if (bubbles.length === 0 && timeSinceLastSpawn > 50) {
+      const immediate = this.spawnBubble();
+      if (immediate) newBubbles.push(immediate);
       this.lastSpawnTime = currentTime;
+      timeSinceLastSpawn = 0;
+    }
+
+    // Spawn catch-up in case frames are delayed
+    const maxPerTick = 3; // spawn burst cap
+    let spawned = 0;
+    while (timeSinceLastSpawn >= this.config.interval && spawned < maxPerTick) {
+      const bubble = this.spawnBubble();
+      if (bubble) newBubbles.push(bubble);
+      this.lastSpawnTime += this.config.interval;
+      timeSinceLastSpawn = currentTime - this.lastSpawnTime;
+      spawned++;
     }
 
     return newBubbles;
@@ -56,28 +69,40 @@ export class BubbleSpawner {
 
     const x = this.getRandomX();
     const y = this.screenHeight * 0.8; // Spawn in the lower part of screen (80% down)
-    const id = `bubble_${++this.idCounter}`;
+    const id = `bubble_${Date.now()}_${++this.idCounter}_${Math.random().toString(36).slice(2,6)}`;
+
+    // Choose size based on config
+    const size = this.rollSize();
+    const speedBySize = size === 'small' ? this.config.speed * 1.25 : size === 'large' ? this.config.speed * 0.75 : this.config.speed;
 
     switch (type) {
       case 'color':
         const color = this.getRandomColor();
-        return BubbleController.create(id, 'color', x, y, color);
+        return BubbleController.create(id, 'color', x, y, color, undefined, -speedBySize, size);
       
       case 'item':
         const itemKey = this.getRandomItem();
-        return BubbleController.create(id, 'item', x, y, undefined, itemKey);
+        return BubbleController.create(id, 'item', x, y, undefined, itemKey, -speedBySize, size);
       
       case 'special':
         const specialKey = this.getRandomSpecial();
-        return BubbleController.create(id, 'special', x, y, undefined, specialKey);
+        return BubbleController.create(id, 'special', x, y, undefined, specialKey, -speedBySize, size);
       
       case 'avoider':
         const avoiderKey = this.getRandomAvoider();
-        return BubbleController.create(id, 'avoider', x, y, undefined, avoiderKey);
+        return BubbleController.create(id, 'avoider', x, y, undefined, avoiderKey, -speedBySize, size);
       
       default:
         return null;
     }
+  }
+
+  private rollSize(): 'small' | 'medium' | 'large' {
+    const r = Math.random();
+    const { small, medium, large } = this.config.sizeChances;
+    if (r < small) return 'small';
+    if (r < small + medium) return 'medium';
+    return 'large';
   }
 
   private rollBubbleType(): BubbleType | null {
@@ -127,8 +152,9 @@ export class BubbleSpawner {
   // Farm L1 defaults from the spec
   static getFarmL1Config(screenWidth: number, screenHeight: number): SpawnConfig {
     return {
-      interval: 800, // 0.8 seconds between spawns (faster, more challenging)
-      speed: 20, // 20 px/s upward (slower)
+      interval: 800, // base
+      speed: 160, // beginner baseline
+      sizeChances: { small: 0.0, medium: 1.0, large: 0.0 },
       probabilities: {
         color: 1.0, // Only color bubbles for now
         item: 0.0,
@@ -140,5 +166,23 @@ export class BubbleSpawner {
       specials: ['rainbow_bubble'],
       avoiders: ['mud'],
     };
+  }
+
+  /** Level-based spawn config helper (1..20). Faster + more frequent with higher levels */
+  static getLevelConfig(level: number, screenWidth: number, screenHeight: number): SpawnConfig {
+    const clamped = Math.min(20, Math.max(1, level));
+    const t = (clamped - 1) / 19; // 0..1 progression
+    const interval = 800 - Math.round(450 * t); // 800 → 350ms
+    const speed = 160 + Math.round(120 * t);    // 160 → 280 px/s
+    const base = this.getFarmL1Config(screenWidth, screenHeight);
+    // Size unlocks: large from level>=3, small from level>=6. Gradually add chances.
+    const sizeChances = {
+      small: clamped >= 6 ? 0.25 + 0.15 * t : 0.0, // up to ~0.40
+      large: clamped >= 3 ? 0.20 + 0.10 * t : 0.0, // up to ~0.30
+      medium: 1.0, // placeholder, normalized below
+    };
+    const sumSL = sizeChances.small + sizeChances.large;
+    sizeChances.medium = Math.max(0, 1 - sumSL);
+    return { ...base, interval, speed, sizeChances };
   }
 }

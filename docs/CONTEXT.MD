@@ -340,6 +340,7 @@ Completed since last update:
 - Wardrobe system (equip/clear costumes, persisted, preview)
 - Color Assist glyphs in gameplay (toggle-wired). Note: palette/icon set finalization still pending.
 - Director: dynamic spawn interval ramps from 800 ms → 350 ms over 45s.
+- Rewards: Per-level (1–20) tables. Early levels favor stickers; later shift toward decor; costumes remain rare but increase slightly. Theme-aware and prefers unowned items.
 
 ### 18) Build Plan (Step-by-step)
 - [x] Initialize Expo project with TypeScript and Expo Router.

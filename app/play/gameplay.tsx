@@ -7,7 +7,7 @@ import { HUD } from '@/src/features/play/hud/HUD';
 import { BubbleSpawner, SpawnConfig } from '@/src/features/play/spawner/BubbleSpawner';
 import { useAppState } from '@/src/state';
 import { useGameplayStore } from '@/src/state/gameplay.slice';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { Dimensions, Image, StyleSheet, TouchableWithoutFeedback, View } from 'react-native';
 import { Button, Text } from 'react-native-paper';
@@ -22,6 +22,10 @@ export default function Gameplay() {
   const [isInitialized, setIsInitialized] = useState(false);
   const [particles, setParticles] = useState<Particle[]>([]);
   const { colorAssist } = useAppState();
+  const params = useLocalSearchParams<{ theme?: string; objective?: string; level?: string }>();
+  const selectedTheme = (params?.theme as string) || 'farm';
+  const level = Number(params?.level ?? '1') || 1;
+  const routeTheme = (router as any)?.getPathFromState ? undefined : undefined;
 
   const {
     isPlaying,
@@ -37,21 +41,32 @@ export default function Gameplay() {
     updateBubbles,
     popBubble,
     setTimeRemaining,
+    resetGame,
   } = useGameplayStore();
 
 
-  // Initialize game systems
+  // (Re)initialize systems whenever level or theme changes
   useEffect(() => {
-    if (isInitialized) return;
+    // Stop any existing loop
+    if (gameLoopRef.current) {
+      gameLoopRef.current.stop();
+    }
 
-    const config: SpawnConfig = BubbleSpawner.getFarmL1Config(SCREEN_WIDTH, SCREEN_HEIGHT);
+    const config: SpawnConfig = BubbleSpawner.getLevelConfig(level, SCREEN_WIDTH, SCREEN_HEIGHT);
     spawnerRef.current = new BubbleSpawner(config, SCREEN_WIDTH, SCREEN_HEIGHT);
-    particleSystemRef.current = new ParticleSystem();
-    directorRef.current = new Director({ minIntervalMs: 350, maxIntervalMs: config.interval, rampDurationMs: 45000 });
+    if (!particleSystemRef.current) {
+      particleSystemRef.current = new ParticleSystem();
+    }
+    directorRef.current = new Director({ minIntervalMs: Math.max(250, config.interval - 150), maxIntervalMs: config.interval, rampDurationMs: 45000 });
+
+    // Reset gameplay state and start fresh
+    const s = useGameplayStore.getState();
+    s.updateBubbles([]);
+    s.setTimeRemaining(s.maxTime);
+    s.startGame();
 
     setIsInitialized(true);
-    startGame();
-  }, [isInitialized, startGame]);
+  }, [level, selectedTheme]);
 
   // Create game loop when game starts
   useEffect(() => {
@@ -135,7 +150,15 @@ export default function Gameplay() {
 
   const handleFinish = () => {
     endGame();
-    router.push('/play/results');
+    router.push({ pathname: '/play/results', params: { theme: selectedTheme, level: String(level) } });
+  };
+
+  const handleGoToSetupDebug = () => {
+    if (gameLoopRef.current) {
+      gameLoopRef.current.stop();
+    }
+    endGame();
+    router.push('/play/setup');
   };
 
   return (
@@ -169,7 +192,7 @@ export default function Gameplay() {
             >
               {bubble.type === 'color' ? (
                 <Image
-                  source={getBubbleImageSource(bubble.color)}
+                  source={getBubbleImageSource(bubble.color, bubble.size)}
                   style={{
                     position: 'absolute',
                     left: bubble.x - bubble.radius,
@@ -226,6 +249,13 @@ export default function Gameplay() {
           >
             Finish (Debug)
           </Button>
+          <Button 
+            mode="outlined" 
+            onPress={handleGoToSetupDebug}
+            style={styles.debugButtonLeft}
+          >
+            Setup (Debug)
+          </Button>
         </View>
       </TouchableWithoutFeedback>
     </View>
@@ -270,8 +300,37 @@ function getAssistGlyph(color: string): string {
   }
 }
 
-function getBubbleImageSource(color?: string) {
-  // Static require to allow bundling
+function getBubbleImageSource(color?: string, size: 'small'|'medium'|'large' = 'medium') {
+  // Use static requires per color/size so Metro bundles images
+  if (size === 'small') {
+    switch (color) {
+      case 'blue':
+        return require('@/assets/bubbles/blue_bubble_small.png');
+      case 'green':
+        return require('@/assets/bubbles/green_bubble_small.png');
+      case 'pink':
+        return require('@/assets/bubbles/pink_bubble_small.png');
+      case 'yellow':
+        return require('@/assets/bubbles/yellow_bubble_small.png');
+      default:
+        return require('@/assets/bubbles/blue_bubble_small.png');
+    }
+  }
+  if (size === 'large') {
+    switch (color) {
+      case 'blue':
+        return require('@/assets/bubbles/blue_bubble_large.png');
+      case 'green':
+        return require('@/assets/bubbles/green_bubble_large.png');
+      case 'pink':
+        return require('@/assets/bubbles/pink_bubble_large.png');
+      case 'yellow':
+        return require('@/assets/bubbles/yellow_bubble_large.png');
+      default:
+        return require('@/assets/bubbles/blue_bubble_large.png');
+    }
+  }
+  // medium (default)
   switch (color) {
     case 'blue':
       return require('@/assets/bubbles/blue_bubble_medium.png');
@@ -344,6 +403,11 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 100,
     right: 16,
+  },
+  debugButtonLeft: {
+    position: 'absolute',
+    bottom: 100,
+    left: 16,
   },
 });
 

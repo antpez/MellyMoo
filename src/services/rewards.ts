@@ -1,4 +1,4 @@
-import { addOwned, InventoryItem } from '@/src/services/inventory';
+import { addOwned, InventoryItem, isOwned } from '@/src/services/inventory';
 
 export type Reward = {
   type: 'sticker' | 'costume' | 'decor';
@@ -55,12 +55,48 @@ const demoRewards: Reward[] = [
   { type: 'costume', key: 'costume_hat_astro', title: 'Astro Hat' },
 ];
 
-let idx = 0;
+type RewardWeights = { sticker: number; decor: number; costume: number };
+const LEVEL_WEIGHTS: Record<number, RewardWeights> = (() => {
+  const table: Record<number, RewardWeights> = {};
+  for (let level = 1; level <= 20; level++) {
+    // Early levels bias to stickers; later increase decor; costumes rare but rise slightly
+    const t = (level - 1) / 19; // 0..1
+    const sticker = 0.75 - 0.35 * t; // 0.75 → 0.40
+    const decor = 0.20 + 0.45 * t;   // 0.20 → 0.65
+    const costume = 1.0 - (sticker + decor); // keep sum=1
+    table[level] = { sticker, decor, costume };
+  }
+  return table;
+})();
 
-export async function rollReward(): Promise<Reward> {
-  const reward = demoRewards[idx % demoRewards.length];
-  idx++;
-  return reward;
+function pickTypeByWeight(weights: RewardWeights): Reward['type'] {
+  const r = Math.random();
+  if (r < weights.sticker) return 'sticker';
+  if (r < weights.sticker + weights.decor) return 'decor';
+  return 'costume';
+}
+
+export async function rollReward(opts?: { theme?: string; level?: number }): Promise<Reward> {
+  const theme = opts?.theme;
+  const level = Math.min(20, Math.max(1, opts?.level ?? 1));
+  const weights = LEVEL_WEIGHTS[level];
+
+  const desiredType = pickTypeByWeight(weights);
+  const themed = demoRewards.filter(r => (!theme || r.theme === theme) && (!desiredType || r.type === desiredType));
+
+  // Prefer unowned
+  const unowned: Reward[] = [];
+  for (const r of themed) {
+    if (!(await isOwned(r.key))) unowned.push(r);
+  }
+  const poolTypeFirst = unowned.length > 0 ? unowned : themed;
+
+  // If pool empty (e.g., no costumes in theme), fallback to any type in theme
+  const fallbackThemed = theme ? demoRewards.filter(r => r.theme === theme) : demoRewards;
+  const pool = poolTypeFirst.length > 0 ? poolTypeFirst : fallbackThemed;
+
+  const chosen = pool[Math.floor(Math.random() * pool.length)] ?? demoRewards[0];
+  return chosen;
 }
 
 export async function grantReward(reward: Reward): Promise<InventoryItem> {

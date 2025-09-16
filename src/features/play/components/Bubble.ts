@@ -7,6 +7,7 @@ export type Bubble = {
   color?: BubbleColor;
   x: number;
   y: number;
+  size: 'small' | 'medium' | 'large';
   radius: number;
   velocityY: number;
   lifetime: number;
@@ -22,16 +23,24 @@ export class BubbleController {
     x: number,
     y: number,
     color?: BubbleColor,
-    itemKey?: string
+    itemKey?: string,
+    velocityY?: number,
+    size: 'small' | 'medium' | 'large' = 'medium'
   ): Bubble {
+    const radiusBySize: Record<'small'|'medium'|'large', number> = {
+      small: 22,
+      medium: 30,
+      large: 40,
+    };
     return {
       id,
       type,
       color,
       x,
       y,
-      radius: 30, // Base radius
-      velocityY: -160, // Float upward (perfect speed for beginners)
+      size,
+      radius: radiusBySize[size],
+      velocityY: velocityY ?? -160, // Float upward
       lifetime: 0,
       maxLifetime: 15, // 15 seconds max (longer)
       isPopped: false,

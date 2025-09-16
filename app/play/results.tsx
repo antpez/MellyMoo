@@ -1,12 +1,15 @@
 import { rollReward } from '@/src/services/rewards';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import React from 'react';
 import { View } from 'react-native';
 import { Button, Text } from 'react-native-paper';
 
 export default function Results() {
+  const params = useLocalSearchParams<{ theme?: string; level?: string }>();
+  const theme = (params?.theme as string) || 'farm';
+  const level = Number(params?.level ?? '1') || 1;
   async function handleContinue() {
-    const reward = await rollReward();
+    const reward = await rollReward({ theme, level });
     router.push({ pathname: '/play/reward-reveal', params: { key: reward.key, type: reward.type, title: reward.title ?? '' } });
   }
 
