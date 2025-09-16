@@ -9,8 +9,8 @@ import { useAppState } from '@/src/state';
 import { useGameplayStore } from '@/src/state/gameplay.slice';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { Dimensions, Image, StyleSheet, TouchableWithoutFeedback, View } from 'react-native';
-import { Button, Text } from 'react-native-paper';
+import { Dimensions, Image, Pressable, Text as RNText, StyleSheet, TouchableWithoutFeedback, View } from 'react-native';
+import { Button, Card, Divider, Switch, Text } from 'react-native-paper';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -21,11 +21,14 @@ export default function Gameplay() {
   const particleSystemRef = useRef<ParticleSystem | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const [particles, setParticles] = useState<Particle[]>([]);
-  const { colorAssist } = useAppState();
+  const [showDevToggles, setShowDevToggles] = useState(false);
+  const [slowMoEnabled, setSlowMoEnabled] = useState(false);
+  const [spawnRateMultiplier, setSpawnRateMultiplier] = useState(1.0);
+  const [deterministicSeed, setDeterministicSeed] = useState(false);
+  const { colorAssist, reduceMotion, longPressMode } = useAppState();
   const params = useLocalSearchParams<{ theme?: string; objective?: string; level?: string }>();
   const selectedTheme = (params?.theme as string) || 'farm';
   const level = Number(params?.level ?? '1') || 1;
-  const routeTheme = (router as any)?.getPathFromState ? undefined : undefined;
 
   const {
     isPlaying,
@@ -161,34 +164,86 @@ export default function Gameplay() {
     router.push('/play/setup');
   };
 
+  // Dev toggle handlers
+  const handleSlowMoToggle = (value: boolean) => {
+    setSlowMoEnabled(value);
+    if (gameLoopRef.current) {
+      gameLoopRef.current.setSlowMo(value);
+    }
+  };
+
+  const handleSpawnRateChange = (value: number) => {
+    setSpawnRateMultiplier(value);
+    if (spawnerRef.current) {
+      spawnerRef.current.setSpawnRateMultiplier(value);
+    }
+  };
+
+  const handleDeterministicToggle = (value: boolean) => {
+    setDeterministicSeed(value);
+    if (spawnerRef.current) {
+      spawnerRef.current.setDeterministic(value);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <TouchableWithoutFeedback onPress={handleTap}>
         <View style={styles.gameArea}>
           {/* Render bubbles */}
           {bubbles.map((bubble) => (
-            <TouchableWithoutFeedback
+            <Pressable
               key={bubble.id}
+              accessibilityRole="button"
+              accessibilityLabel={`Pop ${bubble.color || bubble.type} bubble`}
+              accessibilityHint={longPressMode ? "Long press to pop bubble" : "Tap to pop bubble"}
               onPress={() => {
-                // Create particle effect before popping
-                if (particleSystemRef.current) {
-                  const bubbleColor = getBubbleColor(bubble);
-                  const burstParticles = particleSystemRef.current.createBurstPopEffect(
-                    bubble.x, 
-                    bubble.y, 
-                    bubbleColor, 
-                    8
-                  );
-                  const sparkleParticles = particleSystemRef.current.createSparkleEffect(
-                    bubble.x, 
-                    bubble.y, 
-                    '#FFD700', // Gold sparkles
-                    5
-                  );
-                  particleSystemRef.current.addParticles([...burstParticles, ...sparkleParticles]);
+                // Only pop on tap if long-press mode is disabled
+                if (!longPressMode) {
+                  // Create particle effect before popping (unless reduce motion is enabled)
+                  if (!reduceMotion && particleSystemRef.current) {
+                    const bubbleColor = getBubbleColor(bubble);
+                    const burstParticles = particleSystemRef.current.createBurstPopEffect(
+                      bubble.x, 
+                      bubble.y, 
+                      bubbleColor, 
+                      8
+                    );
+                    const sparkleParticles = particleSystemRef.current.createSparkleEffect(
+                      bubble.x, 
+                      bubble.y, 
+                      '#FFD700', // Gold sparkles
+                      5
+                    );
+                    particleSystemRef.current.addParticles([...burstParticles, ...sparkleParticles]);
+                  }
+                  popBubble(bubble.id);
                 }
-                popBubble(bubble.id);
               }}
+              onLongPress={() => {
+                // Pop on long-press when long-press mode is enabled
+                if (longPressMode) {
+                  // Create particle effect before popping (unless reduce motion is enabled)
+                  if (!reduceMotion && particleSystemRef.current) {
+                    const bubbleColor = getBubbleColor(bubble);
+                    const burstParticles = particleSystemRef.current.createBurstPopEffect(
+                      bubble.x, 
+                      bubble.y, 
+                      bubbleColor, 
+                      8
+                    );
+                    const sparkleParticles = particleSystemRef.current.createSparkleEffect(
+                      bubble.x, 
+                      bubble.y, 
+                      '#FFD700', // Gold sparkles
+                      5
+                    );
+                    particleSystemRef.current.addParticles([...burstParticles, ...sparkleParticles]);
+                  }
+                  popBubble(bubble.id);
+                }
+              }}
+              delayLongPress={500} // 500ms long-press delay
             >
               {bubble.type === 'color' ? (
                 <Image
@@ -217,11 +272,41 @@ export default function Gameplay() {
                   ]}
                 />
               )}
-            </TouchableWithoutFeedback>
+              
+              {/* Color Assist Glyph Overlay */}
+              {colorAssist && (
+                <View
+                  style={{
+                    position: 'absolute',
+                    left: bubble.x - bubble.radius,
+                    top: bubble.y - bubble.radius,
+                    width: bubble.radius * 2,
+                    height: bubble.radius * 2,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    pointerEvents: 'none',
+                  }}
+                >
+                  <RNText
+                    style={{
+                      fontSize: Math.max(bubble.radius * 0.8, 12),
+                      fontWeight: 'bold',
+                      color: '#FFFFFF',
+                      textShadowColor: '#000000',
+                      textShadowOffset: { width: 1, height: 1 },
+                      textShadowRadius: 2,
+                      textAlign: 'center',
+                    }}
+                  >
+                    {getAssistGlyph(bubble)}
+                  </RNText>
+                </View>
+              )}
+            </Pressable>
           ))}
 
-          {/* Particle Effects */}
-          <ParticleRenderer particles={particles} />
+          {/* Particle Effects (disabled when reduce motion is enabled) */}
+          {!reduceMotion && <ParticleRenderer particles={particles} />}
 
           {/* HUD Overlay */}
           <HUD onPause={handlePause} />
@@ -241,21 +326,85 @@ export default function Gameplay() {
             </View>
           )}
 
-          {/* Debug finish button */}
-          <Button 
-            mode="contained" 
-            onPress={handleFinish}
-            style={styles.debugButton}
-          >
-            Finish (Debug)
-          </Button>
-          <Button 
-            mode="outlined" 
-            onPress={handleGoToSetupDebug}
-            style={styles.debugButtonLeft}
-          >
-            Setup (Debug)
-          </Button>
+          {/* Debug Panel */}
+          <View style={styles.debugPanel}>
+            <Button 
+              mode="contained" 
+              onPress={handleFinish}
+              style={styles.debugButton}
+            >
+              Finish (Debug)
+            </Button>
+            <Button 
+              mode="outlined" 
+              onPress={handleGoToSetupDebug}
+              style={styles.debugButtonLeft}
+            >
+              Setup (Debug)
+            </Button>
+            <Button 
+              mode="text" 
+              onPress={() => setShowDevToggles(!showDevToggles)}
+              style={styles.devToggleButton}
+            >
+              {showDevToggles ? 'Hide' : 'Show'} Dev Toggles
+            </Button>
+          </View>
+
+          {/* Dev Toggles Panel */}
+          {showDevToggles && (
+            <Card style={styles.devTogglesCard}>
+              <Card.Content>
+                <Text variant="titleMedium" style={styles.devTogglesTitle}>
+                  Dev Toggles
+                </Text>
+                
+                {/* Slow-mo toggle */}
+                <View style={styles.toggleRow}>
+                  <Text>Slow Motion</Text>
+                  <Switch 
+                    value={slowMoEnabled} 
+                    onValueChange={handleSlowMoToggle}
+                  />
+                </View>
+                
+                <Divider style={styles.toggleDivider} />
+                
+                {/* Spawn rate multiplier */}
+                <View style={styles.toggleRow}>
+                  <Text>Spawn Rate: {spawnRateMultiplier.toFixed(1)}x</Text>
+                </View>
+                <View style={styles.sliderContainer}>
+                  <Button 
+                    mode="outlined" 
+                    compact
+                    onPress={() => handleSpawnRateChange(Math.max(0.1, spawnRateMultiplier - 0.1))}
+                  >
+                    -
+                  </Button>
+                  <Text style={styles.sliderValue}>{spawnRateMultiplier.toFixed(1)}x</Text>
+                  <Button 
+                    mode="outlined" 
+                    compact
+                    onPress={() => handleSpawnRateChange(Math.min(5.0, spawnRateMultiplier + 0.1))}
+                  >
+                    +
+                  </Button>
+                </View>
+                
+                <Divider style={styles.toggleDivider} />
+                
+                {/* Deterministic seed */}
+                <View style={styles.toggleRow}>
+                  <Text>Deterministic Seed</Text>
+                  <Switch 
+                    value={deterministicSeed} 
+                    onValueChange={handleDeterministicToggle}
+                  />
+                </View>
+              </Card.Content>
+            </Card>
+          )}
         </View>
       </TouchableWithoutFeedback>
     </View>
@@ -282,22 +431,95 @@ function getBubbleColor(bubble: Bubble): string {
   return '#CCCCCC';
 }
 
-function getAssistGlyph(color: string): string {
-  // Simple distinct glyphs for each color
-  switch (color) {
-    case 'red':
-      return '▲';
-    case 'blue':
-      return '■';
-    case 'green':
-      return '●';
-    case 'yellow':
-      return '◆';
-    case 'purple':
-      return '★';
-    default:
-      return '●';
+function getAssistGlyph(bubble: any): string {
+  // Comprehensive, accessible glyph palette for Color Assist
+  
+  // Color bubbles - distinct shapes for each color
+  if (bubble.type === 'color') {
+    switch (bubble.color) {
+      case 'red':
+        return '▲'; // Triangle - sharp, attention-grabbing
+      case 'blue':
+        return '■'; // Square - stable, reliable
+      case 'green':
+        return '●'; // Circle - natural, organic
+      case 'yellow':
+        return '◆'; // Diamond - bright, energetic
+      case 'purple':
+        return '★'; // Star - special, magical
+      case 'pink':
+        return '♥'; // Heart - warm, friendly
+      default:
+        return '●';
+    }
   }
+  
+  // Item bubbles - different shapes for different items
+  if (bubble.type === 'item') {
+    switch (bubble.item) {
+      case 'flower':
+        return '✿'; // Flower symbol
+      case 'carrot':
+        return '🥕'; // Carrot emoji
+      case 'apple':
+        return '🍎'; // Apple emoji
+      case 'shell':
+        return '🐚'; // Shell emoji
+      case 'starfish':
+        return '⭐'; // Star emoji
+      case 'pail':
+        return '🪣'; // Bucket emoji
+      case 'lollipop':
+        return '🍭'; // Lollipop emoji
+      case 'jellybean':
+        return '🍬'; // Candy emoji
+      case 'cupcake':
+        return '🧁'; // Cupcake emoji
+      case 'star':
+        return '⭐'; // Star emoji
+      case 'planet':
+        return '🪐'; // Planet emoji
+      case 'comet':
+        return '☄️'; // Comet emoji
+      default:
+        return '🎁'; // Gift box for unknown items
+    }
+  }
+  
+  // Special bubbles - unique shapes for special effects
+  if (bubble.type === 'special') {
+    switch (bubble.special) {
+      case 'rainbow':
+        return '🌈'; // Rainbow
+      case 'disco':
+        return '💫'; // Sparkles
+      case 'giggle':
+        return '😄'; // Laughing face
+      case 'freeze':
+        return '❄️'; // Snowflake
+      default:
+        return '✨'; // Sparkles for unknown specials
+    }
+  }
+  
+  // Avoider bubbles - warning shapes
+  if (bubble.type === 'avoider') {
+    switch (bubble.avoider) {
+      case 'mud':
+        return '⚠️'; // Warning sign
+      case 'thorns':
+        return '🌵'; // Cactus
+      case 'slime':
+        return '🟢'; // Green circle (slime)
+      case 'ice':
+        return '🧊'; // Ice cube
+      default:
+        return '⚠️'; // Warning for unknown avoiders
+    }
+  }
+  
+  // Fallback
+  return '●';
 }
 
 function getBubbleImageSource(color?: string, size: 'small'|'medium'|'large' = 'medium') {
@@ -399,15 +621,57 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     minWidth: 120,
   },
-  debugButton: {
-    position: 'absolute',
-    bottom: 100,
-    right: 16,
-  },
-  debugButtonLeft: {
+  debugPanel: {
     position: 'absolute',
     bottom: 100,
     left: 16,
+    right: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  debugButton: {
+    flex: 1,
+    marginHorizontal: 4,
+  },
+  debugButtonLeft: {
+    flex: 1,
+    marginHorizontal: 4,
+  },
+  devToggleButton: {
+    flex: 1,
+    marginHorizontal: 4,
+  },
+  devTogglesCard: {
+    position: 'absolute',
+    bottom: 160,
+    left: 16,
+    right: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+  },
+  devTogglesTitle: {
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  toggleDivider: {
+    marginVertical: 8,
+  },
+  sliderContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  sliderValue: {
+    marginHorizontal: 16,
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

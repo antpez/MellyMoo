@@ -28,9 +28,9 @@ export type AppState = AccessibilityState & GameplayState & {
 export const useAppState = create<AppState>()(
   persist(
     (set) => ({
-      // Accessibility defaults
+      // Accessibility defaults - all off by default
       reduceMotion: false,
-      colorAssist: true,
+      colorAssist: false,
       longPressMode: false,
       setReduceMotion: (v) => set({ reduceMotion: v }),
       setColorAssist: (v) => set({ colorAssist: v }),

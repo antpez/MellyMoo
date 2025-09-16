@@ -22,6 +22,9 @@ export class BubbleSpawner {
   private screenWidth: number;
   private screenHeight: number;
   private idCounter: number = 0;
+  private spawnRateMultiplier: number = 1.0;
+  private deterministicSeed: boolean = false;
+  private randomSeed: number = Math.random();
 
   constructor(config: SpawnConfig, screenWidth: number, screenHeight: number) {
     this.config = config;
@@ -33,7 +36,8 @@ export class BubbleSpawner {
   update(currentTime: number, bubbles: Bubble[]): Bubble[] {
     const newBubbles: Bubble[] = [];
     
-    // Check if it's time to spawn
+    // Check if it's time to spawn (apply spawn rate multiplier)
+    const adjustedInterval = this.config.interval / this.spawnRateMultiplier;
     let timeSinceLastSpawn = currentTime - this.lastSpawnTime;
 
     // If the screen is empty, guarantee at least one bubble immediately
@@ -47,10 +51,10 @@ export class BubbleSpawner {
     // Spawn catch-up in case frames are delayed
     const maxPerTick = 3; // spawn burst cap
     let spawned = 0;
-    while (timeSinceLastSpawn >= this.config.interval && spawned < maxPerTick) {
+    while (timeSinceLastSpawn >= adjustedInterval && spawned < maxPerTick) {
       const bubble = this.spawnBubble();
       if (bubble) newBubbles.push(bubble);
-      this.lastSpawnTime += this.config.interval;
+      this.lastSpawnTime += adjustedInterval;
       timeSinceLastSpawn = currentTime - this.lastSpawnTime;
       spawned++;
     }
@@ -98,7 +102,7 @@ export class BubbleSpawner {
   }
 
   private rollSize(): 'small' | 'medium' | 'large' {
-    const r = Math.random();
+    const r = this.seededRandom();
     const { small, medium, large } = this.config.sizeChances;
     if (r < small) return 'small';
     if (r < small + medium) return 'medium';
@@ -106,7 +110,7 @@ export class BubbleSpawner {
   }
 
   private rollBubbleType(): BubbleType | null {
-    const rand = Math.random();
+    const rand = this.seededRandom();
     let cumulative = 0;
 
     cumulative += this.config.probabilities.color;
@@ -126,26 +130,26 @@ export class BubbleSpawner {
 
   private getRandomX(): number {
     const margin = 50;
-    return Math.random() * (this.screenWidth - 2 * margin) + margin;
+    return this.seededRandom() * (this.screenWidth - 2 * margin) + margin;
   }
 
   private getRandomColor(): BubbleColor {
-    const index = Math.floor(Math.random() * this.config.colors.length);
+    const index = Math.floor(this.seededRandom() * this.config.colors.length);
     return this.config.colors[index];
   }
 
   private getRandomItem(): string {
-    const index = Math.floor(Math.random() * this.config.items.length);
+    const index = Math.floor(this.seededRandom() * this.config.items.length);
     return this.config.items[index];
   }
 
   private getRandomSpecial(): string {
-    const index = Math.floor(Math.random() * this.config.specials.length);
+    const index = Math.floor(this.seededRandom() * this.config.specials.length);
     return this.config.specials[index];
   }
 
   private getRandomAvoider(): string {
-    const index = Math.floor(Math.random() * this.config.avoiders.length);
+    const index = Math.floor(this.seededRandom() * this.config.avoiders.length);
     return this.config.avoiders[index];
   }
 
@@ -184,5 +188,29 @@ export class BubbleSpawner {
     const sumSL = sizeChances.small + sizeChances.large;
     sizeChances.medium = Math.max(0, 1 - sumSL);
     return { ...base, interval, speed, sizeChances };
+  }
+
+  // Dev toggle methods
+  setSpawnRateMultiplier(multiplier: number) {
+    this.spawnRateMultiplier = Math.max(0.1, Math.min(5.0, multiplier));
+  }
+
+  setDeterministic(enabled: boolean) {
+    this.deterministicSeed = enabled;
+    if (enabled) {
+      this.randomSeed = 12345; // Fixed seed for deterministic behavior
+    } else {
+      this.randomSeed = Math.random();
+    }
+  }
+
+  // Deterministic random number generator
+  private seededRandom(): number {
+    if (this.deterministicSeed) {
+      // Simple linear congruential generator
+      this.randomSeed = (this.randomSeed * 1664525 + 1013904223) % 4294967296;
+      return this.randomSeed / 4294967296;
+    }
+    return Math.random();
   }
 }

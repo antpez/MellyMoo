@@ -37,25 +37,49 @@ export function HUD({ onPause }: HUDProps) {
           </Text>
         </View>
         <View style={styles.pauseContainer}>
-          <Text variant="bodyMedium" onPress={onPause}>⏸️</Text>
+          <Text 
+            variant="bodyMedium" 
+            onPress={onPause}
+            accessibilityRole="button"
+            accessibilityLabel="Pause game"
+            accessibilityHint="Tap to pause the game"
+          >
+            ⏸️
+          </Text>
         </View>
       </View>
 
       {/* Bottom Row */}
       <View style={styles.bottomRow}>
         <View style={styles.scoreContainer}>
-          <Text variant="titleMedium">⭐ {score}</Text>
+          <Text 
+            variant="titleMedium"
+            accessibilityLabel={`Score: ${score} stars`}
+          >
+            ⭐ {score}
+          </Text>
         </View>
         <View style={styles.friendContainer}>
-          <Text variant="bodyMedium">🦆 Melly Moo</Text>
+          <Text 
+            variant="bodyMedium"
+            accessibilityLabel="Melly Moo friend meter"
+          >
+            🦆 Melly Moo
+          </Text>
           <ProgressBar 
             progress={friendMeter} 
             color="#7A4CFF" 
             style={styles.friendBar}
+            accessibilityLabel={`Friend meter: ${Math.round(friendMeter * 100)}% full`}
           />
         </View>
         <View style={styles.stickersContainer}>
-          <Text variant="bodyMedium">📝 {stickersFound}</Text>
+          <Text 
+            variant="bodyMedium"
+            accessibilityLabel={`Stickers found: ${stickersFound}`}
+          >
+            📝 {stickersFound}
+          </Text>
         </View>
       </View>
     </View>

@@ -3,6 +3,8 @@ export type GameLoopState = {
   lastTime: number;
   deltaTime: number;
   frameCount: number;
+  slowMoEnabled: boolean;
+  slowMoMultiplier: number;
 };
 
 export class GameLoop {
@@ -11,6 +13,8 @@ export class GameLoop {
     lastTime: 0,
     deltaTime: 0,
     frameCount: 0,
+    slowMoEnabled: false,
+    slowMoMultiplier: 0.5, // 50% speed when slow-mo is enabled
   };
   
   private animationFrameId: number | null = null;
@@ -46,7 +50,14 @@ export class GameLoop {
     if (!this.state.isRunning) return;
 
     const currentTime = performance.now();
-    this.state.deltaTime = Math.min((currentTime - this.state.lastTime) / 1000, 0.1); // Cap at 100ms
+    let deltaTime = Math.min((currentTime - this.state.lastTime) / 1000, 0.1); // Cap at 100ms
+    
+    // Apply slow-mo multiplier if enabled
+    if (this.state.slowMoEnabled) {
+      deltaTime *= this.state.slowMoMultiplier;
+    }
+    
+    this.state.deltaTime = deltaTime;
     this.state.lastTime = currentTime;
     this.state.frameCount++;
 
@@ -66,5 +77,13 @@ export class GameLoop {
 
   isActive(): boolean {
     return this.state.isRunning;
+  }
+
+  setSlowMo(enabled: boolean) {
+    this.state.slowMoEnabled = enabled;
+  }
+
+  setSlowMoMultiplier(multiplier: number) {
+    this.state.slowMoMultiplier = Math.max(0.1, Math.min(1.0, multiplier));
   }
 }

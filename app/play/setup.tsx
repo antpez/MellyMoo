@@ -13,27 +13,41 @@ export default function PlaySetup() {
   return (
     <View style={{ flex: 1, padding: 16 }}>
       <Text variant="titleMedium" style={{ marginBottom: 8 }}>World</Text>
-      <SegmentedButtons
-        value={theme}
-        onValueChange={setTheme}
-        buttons={themes.map((t) => ({ value: t, label: t }))}
-        style={{ marginBottom: 16 }}
-      />
+      <View accessibilityLabel="Select world theme">
+        <SegmentedButtons
+          value={theme}
+          onValueChange={setTheme}
+          buttons={themes.map((t) => ({ value: t, label: t }))}
+          style={{ marginBottom: 16 }}
+        />
+      </View>
       <Text variant="titleMedium" style={{ marginBottom: 8 }}>Objective</Text>
-      <SegmentedButtons
-        value={objective}
-        onValueChange={setObjective}
-        buttons={[{ value: 'auto', label: 'Auto' }, { value: 'surprise', label: 'Surprise!' }]}
-        style={{ marginBottom: 24 }}
-      />
+      <View accessibilityLabel="Select game objective">
+        <SegmentedButtons
+          value={objective}
+          onValueChange={setObjective}
+          buttons={[{ value: 'auto', label: 'Auto' }, { value: 'surprise', label: 'Surprise!' }]}
+          style={{ marginBottom: 24 }}
+        />
+      </View>
       <Text variant="titleMedium" style={{ marginBottom: 8 }}>Level</Text>
-      <SegmentedButtons
-        value={String(level)}
-        onValueChange={(v) => setLevel(Number(v))}
-        buttons={[1,5,10,15,20].map((n) => ({ value: String(n), label: String(n) }))}
-        style={{ marginBottom: 24 }}
-      />
-      <Button mode="contained" onPress={() => router.push({ pathname: '/play/gameplay', params: { theme, objective, level: String(level) }})}>Start</Button>
+      <View accessibilityLabel="Select difficulty level">
+        <SegmentedButtons
+          value={String(level)}
+          onValueChange={(v) => setLevel(Number(v))}
+          buttons={[1,5,10,15,20].map((n) => ({ value: String(n), label: String(n) }))}
+          style={{ marginBottom: 24 }}
+        />
+      </View>
+      
+      <Button 
+        mode="contained" 
+        onPress={() => router.push({ pathname: '/play/gameplay', params: { theme, objective, level: String(level) }})}
+        accessibilityLabel="Start game"
+        accessibilityHint="Begin playing with selected settings"
+      >
+        Start
+      </Button>
     </View>
   );
 }
