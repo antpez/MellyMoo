@@ -1,4 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 export type ItemKind = 'sticker' | 'costume' | 'decor';
 
@@ -7,6 +9,7 @@ export type InventoryItem = {
   key: string;       // stable content key, e.g., 'duck_hat_astronaut'
   kind: ItemKind;
   title?: string;
+  theme?: string;    // theme for stickers (farm, beach, candy, space)
   payload?: Record<string, unknown>;
 };
 
@@ -45,3 +48,52 @@ export async function addOwned(input: Omit<InventoryItem, 'id'>): Promise<Invent
   await writeAll(items);
   return item;
 }
+
+// Zustand store for easier state management
+export const useInventoryStore = create<{
+  items: InventoryItem[];
+  loadItems: () => Promise<void>;
+  addItem: (item: Omit<InventoryItem, 'id'>) => Promise<void>;
+  getOwnedItems: (kind?: ItemKind) => InventoryItem[];
+  isOwned: (key: string) => boolean;
+}>()(
+  persist(
+    (set, get) => ({
+      items: [],
+      
+      loadItems: async () => {
+        const items = await readAll();
+        set({ items });
+      },
+      
+      addItem: async (itemData) => {
+        const item = await addOwned(itemData);
+        set((state) => ({ items: [...state.items, item] }));
+      },
+      
+      getOwnedItems: (kind) => {
+        const items = get().items;
+        return kind ? items.filter(item => item.kind === kind) : items;
+      },
+      
+      isOwned: (key) => {
+        return get().items.some(item => item.key === key);
+      },
+    }),
+    {
+      name: 'inventory-storage',
+      storage: {
+        getItem: async (name) => {
+          const value = await AsyncStorage.getItem(name);
+          return value ? JSON.parse(value) : null;
+        },
+        setItem: async (name, value) => {
+          await AsyncStorage.setItem(name, JSON.stringify(value));
+        },
+        removeItem: async (name) => {
+          await AsyncStorage.removeItem(name);
+        },
+      },
+    }
+  )
+);

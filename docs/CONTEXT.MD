@@ -332,8 +332,14 @@ Conventions:
 - Record VO (child-safe, warm tone).
 - Implement Director + reward tables.
 - Parent gate & IAP/Ad integration (test with sandbox).
-- Accessibility QA pass (reduce-motion, long-press).
-- Sticker Book UI & Farmyard placeables.
+- Accessibility QA pass (reduce-motion, long-press).r
+- [x] Sticker Book UI
+- [x] Farmyard placeables (inventory, placement, persistence)
+
+Completed since last update:
+- Wardrobe system (equip/clear costumes, persisted, preview)
+- Color Assist glyphs in gameplay (toggle-wired). Note: palette/icon set finalization still pending.
+- Director: dynamic spawn interval ramps from 800 ms → 350 ms over 45s.
 
 ### 18) Build Plan (Step-by-step)
 - [x] Initialize Expo project with TypeScript and Expo Router.

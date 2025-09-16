@@ -9,6 +9,7 @@ import 'react-native-reanimated';
 import { useColorScheme } from '@/components/useColorScheme';
 import '@/src/lib/i18n';
 import { PaperProvider, usePaperTheme } from '@/src/lib/theme';
+import { useInventoryStore } from '@/src/services/inventory';
 
 export {
     // Catch any errors thrown by the Layout component.
@@ -29,6 +30,8 @@ export default function RootLayout() {
     ...FontAwesome.font,
   });
 
+  const { loadItems } = useInventoryStore();
+
   // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
     if (error) throw error;
@@ -37,8 +40,10 @@ export default function RootLayout() {
   useEffect(() => {
     if (loaded) {
       SplashScreen.hideAsync();
+      // Initialize inventory store
+      loadItems();
     }
-  }, [loaded]);
+  }, [loaded, loadItems]);
 
   if (!loaded) {
     return null;

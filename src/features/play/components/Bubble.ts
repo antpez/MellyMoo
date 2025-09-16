@@ -1,5 +1,5 @@
 export type BubbleType = 'color' | 'item' | 'special' | 'avoider';
-export type BubbleColor = 'red' | 'blue' | 'green' | 'yellow' | 'purple';
+export type BubbleColor = 'red' | 'blue' | 'green' | 'yellow' | 'purple' | 'pink';
 
 export type Bubble = {
   id: string;
@@ -31,7 +31,7 @@ export class BubbleController {
       x,
       y,
       radius: 30, // Base radius
-      velocityY: -20, // Float upward (slower)
+      velocityY: -160, // Float upward (perfect speed for beginners)
       lifetime: 0,
       maxLifetime: 15, // 15 seconds max (longer)
       isPopped: false,

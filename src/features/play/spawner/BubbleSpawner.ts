@@ -45,6 +45,11 @@ export class BubbleSpawner {
     return newBubbles;
   }
 
+  /** Allows the Director to adjust spawn rate dynamically */
+  public setIntervalMs(interval: number) {
+    this.config.interval = Math.max(100, interval); // clamp to sane minimum
+  }
+
   private spawnBubble(): Bubble | null {
     const type = this.rollBubbleType();
     if (!type) return null;
@@ -122,15 +127,15 @@ export class BubbleSpawner {
   // Farm L1 defaults from the spec
   static getFarmL1Config(screenWidth: number, screenHeight: number): SpawnConfig {
     return {
-      interval: 1500, // 1.5 seconds between spawns (slower)
+      interval: 800, // 0.8 seconds between spawns (faster, more challenging)
       speed: 20, // 20 px/s upward (slower)
       probabilities: {
-        color: 0.70, // 70%
-        item: 0.20,  // 20%
-        special: 0.07, // 7%
-        avoider: 0.03, // 3%
+        color: 1.0, // Only color bubbles for now
+        item: 0.0,
+        special: 0.0,
+        avoider: 0.0,
       },
-      colors: ['red', 'blue', 'green'],
+      colors: ['blue', 'green', 'pink', 'yellow'],
       items: ['flower', 'carrot', 'apple'],
       specials: ['rainbow_bubble'],
       avoiders: ['mud'],

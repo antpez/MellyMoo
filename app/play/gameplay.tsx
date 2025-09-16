@@ -1,11 +1,15 @@
 import { Bubble, BubbleController } from '@/src/features/play/components/Bubble';
+import { Director } from '@/src/features/play/controllers/Director';
 import { GameLoop } from '@/src/features/play/controllers/GameLoop';
+import { ParticleRenderer } from '@/src/features/play/effects/ParticleRenderer';
+import { Particle, ParticleSystem } from '@/src/features/play/effects/ParticleSystem';
 import { HUD } from '@/src/features/play/hud/HUD';
 import { BubbleSpawner, SpawnConfig } from '@/src/features/play/spawner/BubbleSpawner';
+import { useAppState } from '@/src/state';
 import { useGameplayStore } from '@/src/state/gameplay.slice';
 import { router } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { Dimensions, StyleSheet, TouchableWithoutFeedback, View } from 'react-native';
+import { Dimensions, Image, StyleSheet, TouchableWithoutFeedback, View } from 'react-native';
 import { Button, Text } from 'react-native-paper';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -13,7 +17,11 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 export default function Gameplay() {
   const gameLoopRef = useRef<GameLoop | null>(null);
   const spawnerRef = useRef<BubbleSpawner | null>(null);
+  const directorRef = useRef<Director | null>(null);
+  const particleSystemRef = useRef<ParticleSystem | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [particles, setParticles] = useState<Particle[]>([]);
+  const { colorAssist } = useAppState();
 
   const {
     isPlaying,
@@ -38,6 +46,8 @@ export default function Gameplay() {
 
     const config: SpawnConfig = BubbleSpawner.getFarmL1Config(SCREEN_WIDTH, SCREEN_HEIGHT);
     spawnerRef.current = new BubbleSpawner(config, SCREEN_WIDTH, SCREEN_HEIGHT);
+    particleSystemRef.current = new ParticleSystem();
+    directorRef.current = new Director({ minIntervalMs: 350, maxIntervalMs: config.interval, rampDurationMs: 45000 });
 
     setIsInitialized(true);
     startGame();
@@ -70,8 +80,19 @@ export default function Gameplay() {
 
         // Spawn new bubbles
         if (spawnerRef.current) {
+          // Adjust spawn interval dynamically
+          if (directorRef.current) {
+            const interval = directorRef.current.getCurrentIntervalMs(performance.now());
+            spawnerRef.current.setIntervalMs(interval);
+          }
           const newBubbles = spawnerRef.current.update(performance.now(), updatedBubbles);
           updatedBubbles.push(...newBubbles);
+        }
+
+        // Update particles
+        if (particleSystemRef.current) {
+          const updatedParticles = particleSystemRef.current.updateParticles(deltaTime);
+          setParticles(updatedParticles);
         }
 
         currentState.updateBubbles(updatedBubbles);
@@ -126,24 +147,58 @@ export default function Gameplay() {
             <TouchableWithoutFeedback
               key={bubble.id}
               onPress={() => {
+                // Create particle effect before popping
+                if (particleSystemRef.current) {
+                  const bubbleColor = getBubbleColor(bubble);
+                  const burstParticles = particleSystemRef.current.createBurstPopEffect(
+                    bubble.x, 
+                    bubble.y, 
+                    bubbleColor, 
+                    8
+                  );
+                  const sparkleParticles = particleSystemRef.current.createSparkleEffect(
+                    bubble.x, 
+                    bubble.y, 
+                    '#FFD700', // Gold sparkles
+                    5
+                  );
+                  particleSystemRef.current.addParticles([...burstParticles, ...sparkleParticles]);
+                }
                 popBubble(bubble.id);
               }}
             >
-              <View
-                style={[
-                  styles.bubble,
-                  {
+              {bubble.type === 'color' ? (
+                <Image
+                  source={getBubbleImageSource(bubble.color)}
+                  style={{
+                    position: 'absolute',
                     left: bubble.x - bubble.radius,
                     top: bubble.y - bubble.radius,
                     width: bubble.radius * 2,
                     height: bubble.radius * 2,
-                    backgroundColor: getBubbleColor(bubble),
-                    borderRadius: bubble.radius,
-                  },
-                ]}
-              />
+                    resizeMode: 'contain',
+                  }}
+                />
+              ) : (
+                <View
+                  style={[
+                    styles.bubble,
+                    {
+                      left: bubble.x - bubble.radius,
+                      top: bubble.y - bubble.radius,
+                      width: bubble.radius * 2,
+                      height: bubble.radius * 2,
+                      backgroundColor: getBubbleColor(bubble),
+                      borderRadius: bubble.radius,
+                    },
+                  ]}
+                />
+              )}
             </TouchableWithoutFeedback>
           ))}
+
+          {/* Particle Effects */}
+          <ParticleRenderer particles={particles} />
 
           {/* HUD Overlay */}
           <HUD onPause={handlePause} />
@@ -185,6 +240,7 @@ function getBubbleColor(bubble: Bubble): string {
       green: '#7ED321',
       yellow: '#F5A623',
       purple: '#9013FE',
+      pink: '#FF69B4',
     };
     return colorMap[bubble.color] || '#CCCCCC';
   }
@@ -194,6 +250,40 @@ function getBubbleColor(bubble: Bubble): string {
   if (bubble.type === 'avoider') return '#8B4513';
   
   return '#CCCCCC';
+}
+
+function getAssistGlyph(color: string): string {
+  // Simple distinct glyphs for each color
+  switch (color) {
+    case 'red':
+      return '▲';
+    case 'blue':
+      return '■';
+    case 'green':
+      return '●';
+    case 'yellow':
+      return '◆';
+    case 'purple':
+      return '★';
+    default:
+      return '●';
+  }
+}
+
+function getBubbleImageSource(color?: string) {
+  // Static require to allow bundling
+  switch (color) {
+    case 'blue':
+      return require('@/assets/bubbles/blue_bubble_medium.png');
+    case 'green':
+      return require('@/assets/bubbles/green_bubble_medium.png');
+    case 'pink':
+      return require('@/assets/bubbles/pink_bubble_medium.png');
+    case 'yellow':
+      return require('@/assets/bubbles/yellow_bubble_medium.png');
+    default:
+      return require('@/assets/bubbles/blue_bubble_medium.png');
+  }
 }
 
 const styles = StyleSheet.create({
@@ -214,10 +304,23 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: '#FFFFFF',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+  assistIconContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  assistIconText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+    textShadowColor: 'rgba(0,0,0,0.3)',
+    textShadowRadius: 2,
+    textShadowOffset: { width: 0, height: 1 },
   },
   pauseOverlay: {
     position: 'absolute',
