@@ -2,8 +2,8 @@ import { IAPService, PRODUCTS, PRODUCT_IDS } from '@/src/services/iap';
 import { ParentGateService } from '@/src/services/parent-gate';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Alert, ScrollView } from 'react-native';
-import { ActivityIndicator, Button, Card, Text } from 'react-native-paper';
+import { Alert, ScrollView, StyleSheet, useColorScheme } from 'react-native';
+import { ActivityIndicator, Button, Card, Text, useTheme } from 'react-native-paper';
 
 type Product = {
   id: string;
@@ -13,6 +13,10 @@ type Product = {
 };
 
 export default function Shop() {
+  const colorScheme = useColorScheme();
+  const theme = useTheme();
+  const isDark = colorScheme === 'dark';
+
   const [products, setProducts] = useState<Product[]>([...PRODUCTS]);
   const [loading, setLoading] = useState(false);
   const [purchasing, setPurchasing] = useState<string | null>(null);
@@ -103,21 +107,47 @@ export default function Shop() {
     }
   }
 
+  const dynamicStyles = StyleSheet.create({
+    container: {
+      flex: 1,
+      padding: 16,
+      backgroundColor: isDark ? '#000000' : '#FFFFFF',
+    },
+    loadingContainer: {
+      justifyContent: 'center',
+      alignItems: 'center',
+      flex: 1,
+    },
+    title: {
+      marginBottom: 16,
+      color: isDark ? '#FFFFFF' : '#000000',
+    },
+    card: {
+      marginBottom: 16,
+      backgroundColor: isDark ? '#1A1A1A' : '#FFFFFF',
+    },
+    footerText: {
+      textAlign: 'center',
+      color: isDark ? '#999999' : '#666',
+      marginTop: 16,
+    },
+  });
+
   if (loading) {
     return (
       <ScrollView 
-        style={{ flex: 1, padding: 16 }} 
-        contentContainerStyle={{ justifyContent: 'center', alignItems: 'center', flex: 1 }}
+        style={dynamicStyles.container} 
+        contentContainerStyle={dynamicStyles.loadingContainer}
       >
         <ActivityIndicator size="large" style={{ marginBottom: 16 }} />
-        <Text>Loading products...</Text>
+        <Text style={{ color: isDark ? '#CCCCCC' : '#000000' }}>Loading products...</Text>
       </ScrollView>
     );
   }
 
   return (
-    <ScrollView style={{ flex: 1, padding: 16 }}>
-      <Text variant="headlineMedium" style={{ marginBottom: 16 }}>Shop</Text>
+    <ScrollView style={dynamicStyles.container}>
+      <Text variant="headlineMedium" style={dynamicStyles.title}>Shop</Text>
       
       {/* Restore Purchases Button */}
       <Button 
@@ -130,10 +160,10 @@ export default function Shop() {
       </Button>
       
       {products.map((item) => (
-        <Card key={item.id} style={{ marginBottom: 16 }}>
+        <Card key={item.id} style={dynamicStyles.card}>
           <Card.Title title={item.title} subtitle={item.price} />
           <Card.Content>
-            <Text>{item.description}</Text>
+            <Text style={{ color: isDark ? '#CCCCCC' : '#000000' }}>{item.description}</Text>
           </Card.Content>
           <Card.Actions>
             <Button 
@@ -147,7 +177,7 @@ export default function Shop() {
         </Card>
       ))}
       
-      <Text variant="bodySmall" style={{ textAlign: 'center', color: '#666', marginTop: 16 }}>
+      <Text variant="bodySmall" style={dynamicStyles.footerText}>
         All purchases are processed securely through your device's app store.
       </Text>
     </ScrollView>

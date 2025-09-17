@@ -1,10 +1,14 @@
 import { ParentGateService } from '@/src/services/parent-gate';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Alert, View } from 'react-native';
-import { Button, Card, Text } from 'react-native-paper';
+import { Alert, ScrollView, StyleSheet, useColorScheme } from 'react-native';
+import { Button, Card, Text, useTheme } from 'react-native-paper';
 
 export default function GrownupsIndex() {
+  const colorScheme = useColorScheme();
+  const theme = useTheme();
+  const isDark = colorScheme === 'dark';
+
   const [isVerified, setIsVerified] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState('');
 
@@ -41,17 +45,51 @@ export default function GrownupsIndex() {
     );
   }
 
+  const dynamicStyles = StyleSheet.create({
+    container: {
+      flex: 1,
+      padding: 16,
+      justifyContent: 'center',
+      backgroundColor: isDark ? '#000000' : '#FFFFFF',
+    },
+    card: {
+      padding: 20,
+      marginBottom: 20,
+      backgroundColor: isDark ? '#1A1A1A' : '#FFFFFF',
+    },
+    title: {
+      marginBottom: 16,
+      textAlign: 'center',
+      color: isDark ? '#FFFFFF' : '#000000',
+    },
+    text: {
+      marginBottom: 16,
+      textAlign: 'center',
+      color: isDark ? '#CCCCCC' : '#000000',
+    },
+    smallText: {
+      textAlign: 'center',
+      color: isDark ? '#999999' : '#666',
+      marginBottom: 20,
+    },
+  });
+
   if (isVerified) {
     return (
-      <View style={{ flex: 1, padding: 16, justifyContent: 'center' }}>
-        <Card style={{ padding: 20, marginBottom: 20 }}>
-          <Text variant="headlineMedium" style={{ marginBottom: 16, textAlign: 'center' }}>
+      <ScrollView 
+        style={dynamicStyles.container}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        bounces={true}
+      >
+        <Card style={dynamicStyles.card}>
+          <Text variant="headlineMedium" style={dynamicStyles.title}>
             Parent Access Verified
           </Text>
-          <Text style={{ marginBottom: 16, textAlign: 'center' }}>
+          <Text style={dynamicStyles.text}>
             You have access to parent features and the shop.
           </Text>
-          <Text variant="bodySmall" style={{ textAlign: 'center', color: '#666', marginBottom: 20 }}>
+          <Text variant="bodySmall" style={dynamicStyles.smallText}>
             Verification expires: {timeRemaining}
           </Text>
         </Card>
@@ -72,19 +110,34 @@ export default function GrownupsIndex() {
         </Button>
         <Button onPress={() => router.push('/grownups/privacy')}>Privacy Policy</Button>
         <Button onPress={() => router.push('/grownups/support')}>Support</Button>
-      </View>
+      </ScrollView>
     );
   }
 
   return (
-    <View style={{ flex: 1, padding: 16, justifyContent: 'center' }}>
-      <Text variant="headlineMedium" style={{ marginBottom: 16 }}>Grown-ups Area</Text>
-      <Text style={{ marginBottom: 24 }}>This area is for parents and guardians only.</Text>
+    <ScrollView 
+      style={dynamicStyles.container}
+      contentContainerStyle={styles.scrollContent}
+      showsVerticalScrollIndicator={false}
+      bounces={true}
+    >
+      <Text variant="headlineMedium" style={dynamicStyles.title}>Grown-ups Area</Text>
+      <Text style={dynamicStyles.text}>This area is for parents and guardians only.</Text>
       <Button mode="contained" onPress={() => router.push('/grownups/parent-gate')} style={{ marginBottom: 12 }}>
         Enter Parent Gate
       </Button>
       <Button onPress={() => router.push('/grownups/privacy')}>Privacy Policy</Button>
       <Button onPress={() => router.push('/grownups/support')}>Support</Button>
-    </View>
+    </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+  },
+});

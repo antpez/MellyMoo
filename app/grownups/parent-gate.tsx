@@ -2,6 +2,7 @@ import { KeyboardDismissView } from '@/src/components/ui/KeyboardDismissView';
 import { ParentGateService } from '@/src/services/parent-gate';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
+import { ScrollView, StyleSheet } from 'react-native';
 import { Button, Card, Text, TextInput } from 'react-native-paper';
 
 // Array of parent gate challenges
@@ -81,62 +82,84 @@ export default function ParentGate() {
   if (isVerified) {
     return (
       <KeyboardDismissView style={{ flex: 1, padding: 16, justifyContent: 'center' }}>
-        <Text variant="headlineMedium" style={{ marginBottom: 16 }}>Verifying...</Text>
-        <Text>Please wait while we verify your access.</Text>
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          bounces={true}
+        >
+          <Text variant="headlineMedium" style={{ marginBottom: 16 }}>Verifying...</Text>
+          <Text>Please wait while we verify your access.</Text>
+        </ScrollView>
       </KeyboardDismissView>
     );
   }
 
   return (
     <KeyboardDismissView style={{ flex: 1, padding: 16, justifyContent: 'center' }}>
-      <Card style={{ padding: 20, marginBottom: 20 }}>
-        <Text variant="headlineMedium" style={{ marginBottom: 16, textAlign: 'center' }}>
-          Parent Verification
-        </Text>
-        <Text style={{ marginBottom: 24, textAlign: 'center' }}>
-          This area is for parents and guardians only. Please answer the math question below to continue.
-        </Text>
-        
-        <Text variant="titleLarge" style={{ marginBottom: 16, textAlign: 'center' }}>
-          {currentChallenge.question}
-        </Text>
-        
-        <TextInput
-          label="Your Answer"
-          value={answer}
-          onChangeText={setAnswer}
-          keyboardType="numeric"
-          style={{ marginBottom: 16 }}
-          accessibilityLabel="Enter your answer to the math question"
-        />
-        
-        {error ? (
-          <Text style={{ color: 'red', marginBottom: 16, textAlign: 'center' }}>
-            {error}
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        bounces={true}
+      >
+        <Card style={{ padding: 20, marginBottom: 20 }}>
+          <Text variant="headlineMedium" style={{ marginBottom: 16, textAlign: 'center' }}>
+            Parent Verification
           </Text>
-        ) : null}
+          <Text style={{ marginBottom: 24, textAlign: 'center' }}>
+            This area is for parents and guardians only. Please answer the math question below to continue.
+          </Text>
+          
+          <Text variant="titleLarge" style={{ marginBottom: 16, textAlign: 'center' }}>
+            {currentChallenge.question}
+          </Text>
+          
+          <TextInput
+            label="Your Answer"
+            value={answer}
+            onChangeText={setAnswer}
+            keyboardType="numeric"
+            style={{ marginBottom: 16 }}
+            accessibilityLabel="Enter your answer to the math question"
+          />
+          
+          {error ? (
+            <Text style={{ color: 'red', marginBottom: 16, textAlign: 'center' }}>
+              {error}
+            </Text>
+          ) : null}
+          
+          <Button 
+            mode="contained" 
+            onPress={handleSubmit}
+            style={{ marginBottom: 12 }}
+            accessibilityLabel="Submit your answer"
+          >
+            Submit Answer
+          </Button>
+          
+          <Button 
+            mode="outlined" 
+            onPress={handleNewChallenge}
+            accessibilityLabel="Get a new math question"
+          >
+            New Question
+          </Button>
+        </Card>
         
-        <Button 
-          mode="contained" 
-          onPress={handleSubmit}
-          style={{ marginBottom: 12 }}
-          accessibilityLabel="Submit your answer"
-        >
-          Submit Answer
-        </Button>
-        
-        <Button 
-          mode="outlined" 
-          onPress={handleNewChallenge}
-          accessibilityLabel="Get a new math question"
-        >
-          New Question
-        </Button>
-      </Card>
-      
-      <Text variant="bodySmall" style={{ textAlign: 'center', color: '#666' }}>
-        Verification expires after 24 hours for security.
-      </Text>
+        <Text variant="bodySmall" style={{ textAlign: 'center', color: '#666' }}>
+          Verification expires after 24 hours for security.
+        </Text>
+      </ScrollView>
     </KeyboardDismissView>
   );
 }
+
+const styles = StyleSheet.create({
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+  },
+});

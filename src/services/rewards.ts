@@ -82,18 +82,31 @@ export async function rollReward(opts?: { theme?: string; level?: number }): Pro
   const weights = LEVEL_WEIGHTS[level];
 
   const desiredType = pickTypeByWeight(weights);
-  const themed = demoRewards.filter(r => (!theme || r.theme === theme) && (!desiredType || r.type === desiredType));
+  
+  // Filter rewards by theme and type
+  let themed = demoRewards.filter(r => (!theme || r.theme === theme) && (!desiredType || r.type === desiredType));
+  
+  // If no rewards found for the desired type in this theme, try any type in the theme
+  if (themed.length === 0 && theme) {
+    themed = demoRewards.filter(r => r.theme === theme);
+  }
+  
+  // If still no rewards found, use any rewards of the desired type
+  if (themed.length === 0 && desiredType) {
+    themed = demoRewards.filter(r => r.type === desiredType);
+  }
+  
+  // Final fallback to all rewards
+  if (themed.length === 0) {
+    themed = demoRewards;
+  }
 
-  // Prefer unowned
+  // Prefer unowned rewards
   const unowned: Reward[] = [];
   for (const r of themed) {
     if (!(await isOwned(r.key))) unowned.push(r);
   }
-  const poolTypeFirst = unowned.length > 0 ? unowned : themed;
-
-  // If pool empty (e.g., no costumes in theme), fallback to any type in theme
-  const fallbackThemed = theme ? demoRewards.filter(r => r.theme === theme) : demoRewards;
-  const pool = poolTypeFirst.length > 0 ? poolTypeFirst : fallbackThemed;
+  const pool = unowned.length > 0 ? unowned : themed;
 
   const chosen = pool[Math.floor(Math.random() * pool.length)] ?? demoRewards[0];
   return chosen;

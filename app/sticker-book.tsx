@@ -1,8 +1,7 @@
 import { useInventoryStore } from '@/src/services/inventory';
-import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { Dimensions, ScrollView, StyleSheet, View } from 'react-native';
-import { Appbar, Card, Chip, SegmentedButtons, Text } from 'react-native-paper';
+import { Dimensions, Image, ScrollView, StyleSheet, useColorScheme, View } from 'react-native';
+import { Card, Chip, SegmentedButtons, Text, useTheme } from 'react-native-paper';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -17,6 +16,10 @@ const THEMES: ThemeButton[] = [
 ];
 
 export default function StickerBook() {
+  const colorScheme = useColorScheme();
+  const theme = useTheme();
+  const isDark = colorScheme === 'dark';
+
   const [selectedTheme, setSelectedTheme] = useState<StickerTheme>('farm');
   const { getOwnedItems, addItem } = useInventoryStore();
 
@@ -25,6 +28,44 @@ export default function StickerBook() {
     sticker.theme === selectedTheme
   );
 
+  // Function to get sticker image based on ID
+  const getStickerImage = (stickerId: string) => {
+    const imageMap: Record<string, any> = {
+      // Farm stickers
+      'duck': require('@/assets/stickers/duck_sticker.png'),
+      'carrot': require('@/assets/stickers/carrot_sticker.png'),
+      'apple': require('@/assets/stickers/apple_sticker.png'),
+      'flower': require('@/assets/stickers/flower_sticker.png'),
+      'barn': require('@/assets/stickers/barn_sticker.png'),
+      'cow': require('@/assets/stickers/cow_waving_sticker.png'),
+      
+      // Beach stickers
+      'shell': require('@/assets/stickers/shell_sticker.png'),
+      'starfish': require('@/assets/stickers/starfish_sticker.png'),
+      'bucket': require('@/assets/stickers/bucket_sticker.png'),
+      'crab': require('@/assets/stickers/crab_sticker.png'),
+      'lighthouse': require('@/assets/stickers/lighthouse_sticker.png'),
+      'seagull': require('@/assets/stickers/seagull_sticker.png'),
+      
+      // Candy stickers
+      'lollipop': require('@/assets/stickers/lollypop_sticker.png'),
+      'jellybean': require('@/assets/stickers/jellybean_sticker.png'),
+      'cupcake': require('@/assets/stickers/cupcake_sticker.png'),
+      'candycane': require('@/assets/stickers/candycane_sticker.png'),
+      'chocolate': require('@/assets/stickers/chocolate_sticker.png'),
+      
+      // Space stickers
+      'star': require('@/assets/stickers/star_sticker.png'),
+      'planet': require('@/assets/stickers/planet_sticker.png'),
+      'comet': require('@/assets/stickers/comet_sticker.png'),
+      'rocket': require('@/assets/stickers/rocket_sticker.png'),
+      'alien': require('@/assets/stickers/alien_sticker.png'),
+      'moon': require('@/assets/stickers/moon_sticker.png'),
+    };
+    
+    return imageMap[stickerId] || null;
+  };
+
   const getThemeInfo = (theme: StickerTheme) => {
     const themeData = {
       farm: {
@@ -32,12 +73,12 @@ export default function StickerBook() {
         description: 'Collect farm animals and vegetables!',
         color: '#8FBC8F',
         stickers: [
-          { id: 'duck', name: 'Duck', collected: themeStickers.some(s => s.id === 'duck') },
-          { id: 'carrot', name: 'Carrot', collected: themeStickers.some(s => s.id === 'carrot') },
-          { id: 'apple', name: 'Apple', collected: themeStickers.some(s => s.id === 'apple') },
-          { id: 'flower', name: 'Flower', collected: themeStickers.some(s => s.id === 'flower') },
-          { id: 'barn', name: 'Barn', collected: themeStickers.some(s => s.id === 'barn') },
-          { id: 'cow', name: 'Cow', collected: themeStickers.some(s => s.id === 'cow') },
+          { id: 'duck', name: 'Duck', collected: themeStickers.some(s => s.key === 'duck') },
+          { id: 'carrot', name: 'Carrot', collected: themeStickers.some(s => s.key === 'carrot') },
+          { id: 'apple', name: 'Apple', collected: themeStickers.some(s => s.key === 'apple') },
+          { id: 'flower', name: 'Flower', collected: themeStickers.some(s => s.key === 'flower') },
+          { id: 'barn', name: 'Barn', collected: themeStickers.some(s => s.key === 'barn') },
+          { id: 'cow', name: 'Cow', collected: themeStickers.some(s => s.key === 'cow') },
         ]
       },
       beach: {
@@ -45,12 +86,12 @@ export default function StickerBook() {
         description: 'Gather seashells and ocean treasures!',
         color: '#87CEEB',
         stickers: [
-          { id: 'shell', name: 'Shell', collected: themeStickers.some(s => s.id === 'shell') },
-          { id: 'starfish', name: 'Starfish', collected: themeStickers.some(s => s.id === 'starfish') },
-          { id: 'pail', name: 'Pail', collected: themeStickers.some(s => s.id === 'pail') },
-          { id: 'crab', name: 'Crab', collected: themeStickers.some(s => s.id === 'crab') },
-          { id: 'lighthouse', name: 'Lighthouse', collected: themeStickers.some(s => s.id === 'lighthouse') },
-          { id: 'seagull', name: 'Seagull', collected: themeStickers.some(s => s.id === 'seagull') },
+          { id: 'shell', name: 'Shell', collected: themeStickers.some(s => s.key === 'shell') },
+          { id: 'starfish', name: 'Starfish', collected: themeStickers.some(s => s.key === 'starfish') },
+          { id: 'bucket', name: 'Bucket', collected: themeStickers.some(s => s.key === 'bucket') },
+          { id: 'crab', name: 'Crab', collected: themeStickers.some(s => s.key === 'crab') },
+          { id: 'lighthouse', name: 'Lighthouse', collected: themeStickers.some(s => s.key === 'lighthouse') },
+          { id: 'seagull', name: 'Seagull', collected: themeStickers.some(s => s.key === 'seagull') },
         ]
       },
       candy: {
@@ -58,12 +99,11 @@ export default function StickerBook() {
         description: 'Sweet treats and sugary delights!',
         color: '#FFB6C1',
         stickers: [
-          { id: 'lollipop', name: 'Lollipop', collected: themeStickers.some(s => s.id === 'lollipop') },
-          { id: 'jellybean', name: 'Jellybean', collected: themeStickers.some(s => s.id === 'jellybean') },
-          { id: 'cupcake', name: 'Cupcake', collected: themeStickers.some(s => s.id === 'cupcake') },
-          { id: 'gumdrop', name: 'Gumdrop', collected: themeStickers.some(s => s.id === 'gumdrop') },
-          { id: 'candy_cane', name: 'Candy Cane', collected: themeStickers.some(s => s.id === 'candy_cane') },
-          { id: 'chocolate', name: 'Chocolate', collected: themeStickers.some(s => s.id === 'chocolate') },
+          { id: 'lollipop', name: 'Lollipop', collected: themeStickers.some(s => s.key === 'lollipop') },
+          { id: 'jellybean', name: 'Jellybean', collected: themeStickers.some(s => s.key === 'jellybean') },
+          { id: 'cupcake', name: 'Cupcake', collected: themeStickers.some(s => s.key === 'cupcake') },
+          { id: 'candycane', name: 'Candy Cane', collected: themeStickers.some(s => s.key === 'candycane') },
+          { id: 'chocolate', name: 'Chocolate', collected: themeStickers.some(s => s.key === 'chocolate') },
         ]
       },
       space: {
@@ -71,12 +111,12 @@ export default function StickerBook() {
         description: 'Explore the cosmos and beyond!',
         color: '#4B0082',
         stickers: [
-          { id: 'star', name: 'Star', collected: themeStickers.some(s => s.id === 'star') },
-          { id: 'planet', name: 'Planet', collected: themeStickers.some(s => s.id === 'planet') },
-          { id: 'comet', name: 'Comet', collected: themeStickers.some(s => s.id === 'comet') },
-          { id: 'rocket', name: 'Rocket', collected: themeStickers.some(s => s.id === 'rocket') },
-          { id: 'alien', name: 'Alien', collected: themeStickers.some(s => s.id === 'alien') },
-          { id: 'moon', name: 'Moon', collected: themeStickers.some(s => s.id === 'moon') },
+          { id: 'star', name: 'Star', collected: themeStickers.some(s => s.key === 'star') },
+          { id: 'planet', name: 'Planet', collected: themeStickers.some(s => s.key === 'planet') },
+          { id: 'comet', name: 'Comet', collected: themeStickers.some(s => s.key === 'comet') },
+          { id: 'rocket', name: 'Rocket', collected: themeStickers.some(s => s.key === 'rocket') },
+          { id: 'alien', name: 'Alien', collected: themeStickers.some(s => s.key === 'alien') },
+          { id: 'moon', name: 'Moon', collected: themeStickers.some(s => s.key === 'moon') },
         ]
       }
     };
@@ -97,20 +137,59 @@ export default function StickerBook() {
     ];
     
     const randomSticker = sampleStickers[Math.floor(Math.random() * sampleStickers.length)];
-    await addItem({
-      key: randomSticker.key,
-      kind: 'sticker',
-      title: randomSticker.title,
-      theme: randomSticker.theme,
-    });
+    
+    try {
+      await addItem({
+        key: randomSticker.key,
+        kind: 'sticker',
+        title: randomSticker.title,
+        theme: randomSticker.theme,
+      });
+      
+      // Switch to the theme of the added sticker
+      setSelectedTheme(randomSticker.theme as StickerTheme);
+      
+      console.log(`Added sticker: ${randomSticker.title} (${randomSticker.theme})`);
+    } catch (error) {
+      console.error('Failed to add sticker:', error);
+    }
   };
 
+  const dynamicStyles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: isDark ? '#000000' : '#F8F9FA',
+    },
+    stickerCard: {
+      width: (SCREEN_WIDTH - 48) / 2,
+      marginBottom: 16,
+      elevation: 2,
+      borderWidth: 2,
+      backgroundColor: isDark ? '#1A1A1A' : '#FFFFFF',
+    },
+    emptyCard: {
+      marginVertical: 20,
+      backgroundColor: isDark ? '#2D1B0B' : '#FFF3E0',
+      borderWidth: 1,
+      borderColor: '#FFB74D',
+    },
+    debugCard: {
+      marginTop: 16,
+      backgroundColor: isDark ? '#2D1B0B' : '#FFF3E0',
+      borderWidth: 1,
+      borderColor: '#FFB74D',
+    },
+  });
+
   return (
-    <View style={styles.container}>
-      <Appbar.Header>
-        <Appbar.BackAction onPress={() => router.back()} />
-        <Appbar.Content title="Sticker Book" />
-      </Appbar.Header>
+    <View style={dynamicStyles.container}>
+      <View style={styles.logoContainer}>
+        <Image
+          source={require('@/assets/images/mellymoo_logo.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+      </View>
 
       <ScrollView style={styles.content}>
         {/* Theme Selector */}
@@ -155,26 +234,36 @@ export default function StickerBook() {
             <Card 
               key={sticker.id} 
               style={[
-                styles.stickerCard,
+                dynamicStyles.stickerCard,
                 { 
                   backgroundColor: sticker.collected 
                     ? currentTheme.color + '40' 
-                    : '#F5F5F5',
-                  borderColor: sticker.collected ? currentTheme.color : '#E0E0E0',
+                    : isDark ? '#2A2A2A' : '#F5F5F5',
+                  borderColor: sticker.collected ? currentTheme.color : isDark ? '#444444' : '#E0E0E0',
                 }
               ]}
             >
               <Card.Content style={styles.stickerContent}>
                 <View style={styles.stickerIcon}>
-                  <Text variant="displaySmall">
-                    {sticker.collected ? '✨' : '❓'}
-                  </Text>
+                  {sticker.collected ? (
+                    <Image 
+                      source={getStickerImage(sticker.id)} 
+                      style={styles.stickerImage}
+                      resizeMode="contain"
+                    />
+                  ) : (
+                    <View style={styles.placeholderContainer}>
+                      <Text variant="displaySmall" style={styles.placeholderText}>
+                        ❓
+                      </Text>
+                    </View>
+                  )}
                 </View>
                 <Text 
                   variant="bodyMedium" 
                   style={[
                     styles.stickerName,
-                    { color: sticker.collected ? currentTheme.color : '#999' }
+                    { color: sticker.collected ? currentTheme.color : isDark ? '#CCCCCC' : '#999' }
                   ]}
                 >
                   {sticker.name}
@@ -208,7 +297,7 @@ export default function StickerBook() {
         )}
 
         {/* Debug: Add Sample Sticker */}
-        <Card style={styles.debugCard}>
+        <Card style={dynamicStyles.debugCard}>
           <Card.Content>
             <Text variant="bodyMedium" style={styles.debugText}>
               Debug: Add a random sticker to test the collection
@@ -228,9 +317,15 @@ export default function StickerBook() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F8F9FA',
+  logoContainer: {
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+  },
+  logo: {
+    width: 200,
+    height: 120,
+    maxWidth: '80%',
   },
   content: {
     flex: 1,
@@ -275,18 +370,29 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 24,
   },
-  stickerCard: {
-    width: (SCREEN_WIDTH - 48) / 2,
-    marginBottom: 16,
-    elevation: 2,
-    borderWidth: 2,
-  },
   stickerContent: {
     alignItems: 'center',
     paddingVertical: 16,
   },
   stickerIcon: {
     marginBottom: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stickerImage: {
+    width: 60,
+    height: 60,
+  },
+  placeholderContainer: {
+    width: 60,
+    height: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    borderRadius: 30,
+  },
+  placeholderText: {
+    opacity: 0.5,
   },
   stickerName: {
     textAlign: 'center',
@@ -310,12 +416,6 @@ const styles = StyleSheet.create({
   completeDescription: {
     textAlign: 'center',
     opacity: 0.8,
-  },
-  debugCard: {
-    marginTop: 16,
-    backgroundColor: '#FFF3E0',
-    borderWidth: 1,
-    borderColor: '#FFB74D',
   },
   debugText: {
     textAlign: 'center',

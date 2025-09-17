@@ -67,7 +67,12 @@ function RootLayoutNav() {
           <Stack.Screen name="sticker-book" options={{ title: 'Sticker Book' }} />
           <Stack.Screen name="farmyard" options={{ title: 'Farmyard' }} />
           <Stack.Screen name="wardrobe" options={{ title: 'Wardrobe' }} />
-          <Stack.Screen name="play" options={{ headerShown: false }} />
+          <Stack.Screen 
+            name="play" 
+            options={{ 
+              headerShown: false,
+            }} 
+          />
           <Stack.Screen name="grownups" options={{ headerShown: false }} />
           <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
         </Stack>

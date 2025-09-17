@@ -7,8 +7,9 @@ import { HUD } from '@/src/features/play/hud/HUD';
 import { BubbleSpawner, SpawnConfig } from '@/src/features/play/spawner/BubbleSpawner';
 import { useAppState } from '@/src/state';
 import { useGameplayStore } from '@/src/state/gameplay.slice';
-import { router, useLocalSearchParams } from 'expo-router';
-import React, { useEffect, useRef, useState } from 'react';
+import { useNavigation } from '@react-navigation/native';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Dimensions, Image, Pressable, Text as RNText, StyleSheet, TouchableWithoutFeedback, View } from 'react-native';
 import { Button, Card, Divider, Switch, Text } from 'react-native-paper';
 
@@ -47,6 +48,27 @@ export default function Gameplay() {
     resetGame,
   } = useGameplayStore();
 
+
+  const navigation = useNavigation();
+
+  // Disable swipe gestures when gameplay screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      // Disable gestures when screen is focused
+      navigation.setOptions({
+        gestureEnabled: false,
+        headerBackVisible: false,
+      });
+      
+      return () => {
+        // Re-enable gestures when screen loses focus
+        navigation.setOptions({
+          gestureEnabled: true,
+          headerBackVisible: true,
+        });
+      };
+    }, [navigation])
+  );
 
   // (Re)initialize systems whenever level or theme changes
   useEffect(() => {
@@ -322,6 +344,14 @@ export default function Gameplay() {
               </Button>
               <Button mode="outlined" onPress={handleFinish} style={styles.pauseButton}>
                 Quit
+              </Button>
+              <Button 
+                mode="text" 
+                onPress={handleGoToSetupDebug} 
+                style={styles.pauseButton}
+                icon="arrow-left"
+              >
+                Back to Setup
               </Button>
             </View>
           )}

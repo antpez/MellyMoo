@@ -1,6 +1,7 @@
 import { KeyboardDismissView } from '@/src/components/ui/KeyboardDismissView';
 import { ChildProfile, createChild, deleteChild, listChildren } from '@/src/services/children';
 import React, { useEffect, useState } from 'react';
+import { ScrollView, StyleSheet } from 'react-native';
 import { Button, Dialog, FAB, List, Portal, TextInput } from 'react-native-paper';
 
 export default function ChildrenScreen() {
@@ -31,11 +32,17 @@ export default function ChildrenScreen() {
 
   return (
     <KeyboardDismissView style={{ flex: 1 }}>
-      <List.Section>
-        {children.map((c) => (
-          <List.Item key={c.id} title={c.name} right={() => <Button onPress={() => handleDelete(c.id)}>Delete</Button>} />
-        ))}
-      </List.Section>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        bounces={true}
+      >
+        <List.Section>
+          {children.map((c) => (
+            <List.Item key={c.id} title={c.name} right={() => <Button onPress={() => handleDelete(c.id)}>Delete</Button>} />
+          ))}
+        </List.Section>
+      </ScrollView>
       <Portal>
         <Dialog visible={visible} onDismiss={() => setVisible(false)}>
           <Dialog.Title>Add Child</Dialog.Title>
@@ -52,3 +59,11 @@ export default function ChildrenScreen() {
     </KeyboardDismissView>
   );
 }
+
+const styles = StyleSheet.create({
+  scrollContent: {
+    flexGrow: 1,
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+  },
+});

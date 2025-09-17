@@ -2,6 +2,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
+// Re-export progression store
+export { useProgressionStore } from './progression.slice';
+
 export type AccessibilityState = {
   reduceMotion: boolean;
   colorAssist: boolean;

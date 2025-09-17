@@ -172,8 +172,17 @@ export class BubbleSpawner {
     };
   }
 
-  /** Level-based spawn config helper (1..20). Faster + more frequent with higher levels */
+  /** Level-based spawn config helper (1..20). Uses new LevelConfigs system */
   static getLevelConfig(level: number, screenWidth: number, screenHeight: number): SpawnConfig {
+    // Import here to avoid circular dependencies
+    const { getLevelConfig } = require('../config/LevelConfigs');
+    const levelConfig = getLevelConfig(level, screenWidth, screenHeight);
+    
+    if (levelConfig) {
+      return levelConfig.spawnConfig;
+    }
+    
+    // Fallback to old system if level config not found
     const clamped = Math.min(20, Math.max(1, level));
     const t = (clamped - 1) / 19; // 0..1 progression
     const interval = 800 - Math.round(450 * t); // 800 → 350ms

@@ -1,9 +1,8 @@
 import { useInventoryStore } from '@/src/services/inventory';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Dimensions, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { Appbar, Button, Card, Modal, Portal, Text } from 'react-native-paper';
+import { Dimensions, Image, ScrollView, StyleSheet, TouchableOpacity, useColorScheme, View } from 'react-native';
+import { Button, Card, FAB, Modal, Portal, Text, useTheme } from 'react-native-paper';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -44,6 +43,10 @@ const AVAILABLE_DECORATIONS: Decoration[] = [
 ];
 
 export default function Farmyard() {
+  const colorScheme = useColorScheme();
+  const theme = useTheme();
+  const isDark = colorScheme === 'dark';
+
   const [showInventory, setShowInventory] = useState(false);
   const [placedDecorations, setPlacedDecorations] = useState<PlacedDecoration[]>([]);
   const { getOwnedItems, addItem } = useInventoryStore();
@@ -145,21 +148,57 @@ export default function Farmyard() {
     setPlacedDecorations(prev => [...prev, newDecoration]);
   };
 
+  const dynamicStyles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: isDark ? '#000000' : '#F0F8F0',
+    },
+    farmBoundary: {
+      flex: 1,
+      backgroundColor: isDark ? '#0A1A0A' : '#E8F5E8',
+      borderRadius: 16,
+      borderWidth: 3,
+      borderColor: '#4CAF50',
+      borderStyle: 'dashed',
+      position: 'relative',
+      minHeight: 400,
+    },
+    actionButtons: {
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+      padding: 16,
+      backgroundColor: isDark ? '#1A1A1A' : 'white',
+      borderTopWidth: 1,
+      borderTopColor: isDark ? '#333333' : '#E0E0E0',
+    },
+    modalContent: {
+      backgroundColor: isDark ? '#1A1A1A' : 'white',
+      margin: 20,
+      borderRadius: 16,
+      maxHeight: '80%',
+    },
+    emptyCard: {
+      marginVertical: 20,
+      backgroundColor: isDark ? '#2D1B0B' : '#FFF3E0',
+      borderWidth: 1,
+      borderColor: '#FFB74D',
+    },
+  });
+
   return (
-    <View style={styles.container}>
-      <Appbar.Header>
-        <Appbar.BackAction onPress={() => router.back()} />
-        <Appbar.Content title="Farmyard Decor" />
-        <Appbar.Action 
-          icon="package-variant" 
-          onPress={() => setShowInventory(true)} 
+    <View style={dynamicStyles.container}>
+      <View style={styles.logoContainer}>
+        <Image
+          source={require('@/assets/images/mellymoo_logo.png')}
+          style={styles.logo}
+          resizeMode="contain"
         />
-      </Appbar.Header>
+      </View>
 
       <View style={styles.content}>
         {/* Farm Area */}
         <View style={styles.farmArea}>
-          <View style={styles.farmBoundary}>
+          <View style={dynamicStyles.farmBoundary}>
             <Text variant="bodyMedium" style={styles.boundaryText}>
               Decorate your farmyard! Drag decorations from the inventory.
             </Text>
@@ -186,7 +225,7 @@ export default function Farmyard() {
         </View>
 
         {/* Action Buttons */}
-        <View style={styles.actionButtons}>
+        <View style={dynamicStyles.actionButtons}>
           <Button 
             mode="outlined" 
             onPress={clearFarmyard}
@@ -211,12 +250,19 @@ export default function Farmyard() {
         </View>
       </View>
 
+      {/* Floating Action Button for Inventory */}
+      <FAB
+        icon="package-variant"
+        style={styles.fab}
+        onPress={() => setShowInventory(true)}
+      />
+
       {/* Inventory Modal */}
       <Portal>
         <Modal
           visible={showInventory}
           onDismiss={() => setShowInventory(false)}
-          contentContainerStyle={styles.modalContent}
+          contentContainerStyle={dynamicStyles.modalContent}
         >
           <View style={styles.modalHeader}>
             <Text variant="headlineSmall">Decoration Inventory</Text>
@@ -225,7 +271,7 @@ export default function Farmyard() {
           
           <ScrollView style={styles.inventoryGrid}>
             {availableDecorations.length === 0 ? (
-              <Card style={styles.emptyCard}>
+              <Card style={dynamicStyles.emptyCard}>
                 <Card.Content>
                   <Text variant="bodyLarge" style={styles.emptyText}>
                     No decorations available yet!
@@ -277,26 +323,28 @@ function DraggableDecoration({
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F0F8F0',
+  logoContainer: {
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+  },
+  logo: {
+    width: 200,
+    height: 120,
+    maxWidth: '80%',
   },
   content: {
     flex: 1,
   },
+  fab: {
+    position: 'absolute',
+    margin: 16,
+    right: 0,
+    bottom: 0,
+  },
   farmArea: {
     flex: 1,
     padding: 16,
-  },
-  farmBoundary: {
-    flex: 1,
-    backgroundColor: '#E8F5E8',
-    borderRadius: 16,
-    borderWidth: 3,
-    borderColor: '#4CAF50',
-    borderStyle: 'dashed',
-    position: 'relative',
-    minHeight: 400,
   },
   boundaryText: {
     textAlign: 'center',
@@ -316,23 +364,9 @@ const styles = StyleSheet.create({
   decorationEmoji: {
     fontSize: 24,
   },
-  actionButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    padding: 16,
-    backgroundColor: 'white',
-    borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
-  },
   actionButton: {
     flex: 1,
     marginHorizontal: 4,
-  },
-  modalContent: {
-    backgroundColor: 'white',
-    margin: 20,
-    borderRadius: 16,
-    maxHeight: '80%',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -358,12 +392,6 @@ const styles = StyleSheet.create({
   decorationName: {
     marginTop: 4,
     textAlign: 'center',
-  },
-  emptyCard: {
-    marginVertical: 20,
-    backgroundColor: '#FFF3E0',
-    borderWidth: 1,
-    borderColor: '#FFB74D',
   },
   emptyText: {
     textAlign: 'center',
