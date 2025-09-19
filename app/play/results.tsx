@@ -67,9 +67,6 @@ export default function Results() {
   const dynamicStyles = StyleSheet.create({
     container: {
       flex: 1,
-      padding: 16,
-      justifyContent: 'center',
-      alignItems: 'center',
       backgroundColor: isDark ? '#000000' : '#FFFFFF',
     },
     card: {

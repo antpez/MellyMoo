@@ -81,7 +81,7 @@ export default function ParentGate() {
 
   if (isVerified) {
     return (
-      <KeyboardDismissView style={{ flex: 1, padding: 16, justifyContent: 'center' }}>
+      <KeyboardDismissView style={{ flex: 1 }}>
         <ScrollView 
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
@@ -95,7 +95,7 @@ export default function ParentGate() {
   }
 
   return (
-    <KeyboardDismissView style={{ flex: 1, padding: 16, justifyContent: 'center' }}>
+    <KeyboardDismissView style={{ flex: 1 }}>
       <ScrollView 
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}

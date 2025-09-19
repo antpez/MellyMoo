@@ -110,13 +110,11 @@ export default function Shop() {
   const dynamicStyles = StyleSheet.create({
     container: {
       flex: 1,
-      padding: 16,
       backgroundColor: isDark ? '#000000' : '#FFFFFF',
     },
     loadingContainer: {
-      justifyContent: 'center',
-      alignItems: 'center',
       flex: 1,
+      padding: 16,
     },
     title: {
       marginBottom: 16,
@@ -146,7 +144,10 @@ export default function Shop() {
   }
 
   return (
-    <ScrollView style={dynamicStyles.container}>
+    <ScrollView 
+      style={dynamicStyles.container}
+      contentContainerStyle={{ padding: 16 }}
+    >
       <Text variant="headlineMedium" style={dynamicStyles.title}>Shop</Text>
       
       {/* Restore Purchases Button */}

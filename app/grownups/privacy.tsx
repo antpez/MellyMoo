@@ -4,7 +4,10 @@ import { Text } from 'react-native-paper';
 
 export default function Privacy() {
   return (
-    <ScrollView style={{ flex: 1, padding: 16 }}>
+    <ScrollView 
+      style={{ flex: 1 }} 
+      contentContainerStyle={{ padding: 16 }}
+    >
       <Text variant="headlineMedium" style={{ marginBottom: 16 }}>Privacy Policy</Text>
       <Text variant="titleMedium" style={{ marginBottom: 8 }}>Data Collection</Text>
       <Text style={{ marginBottom: 16 }}>

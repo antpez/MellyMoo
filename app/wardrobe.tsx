@@ -23,12 +23,12 @@ export default function Wardrobe() {
       case 'shocked':
         return require('@/assets/images/cow_shocked.png');
       case 'sitting':
-        return require('@/assets/images/cow_sitting.png');
+        return require('@/assets/images/cow_happy.png'); // Using cow_happy.png for sitting pose
       case 'waving':
         return require('@/assets/images/cow_waving.png');
       case 'normal':
       default:
-        return require('@/assets/images/cow_1.png');
+        return require('@/assets/images/cow.png'); // Using cow.png for normal pose
     }
   };
 
@@ -46,7 +46,7 @@ export default function Wardrobe() {
     <View style={dynamicStyles.container}>
       <View style={styles.logoContainer}>
         <Image
-          source={require('@/assets/images/mellymoo_logo.png')}
+          source={require('@/assets/images/wardrobe.png')}
           style={styles.logo}
           resizeMode="contain"
         />

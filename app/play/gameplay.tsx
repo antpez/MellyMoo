@@ -1,4 +1,7 @@
 import { Bubble, BubbleController } from '@/src/features/play/components/Bubble';
+import { getColorAssistGlyph } from '@/src/features/play/components/ColorAssist';
+import { LevelCompletionCard } from '@/src/features/play/components/LevelCompletionCard';
+import { getLevelConfig } from '@/src/features/play/config/LevelConfigs';
 import { Director } from '@/src/features/play/controllers/Director';
 import { GameLoop } from '@/src/features/play/controllers/GameLoop';
 import { ParticleRenderer } from '@/src/features/play/effects/ParticleRenderer';
@@ -6,7 +9,7 @@ import { Particle, ParticleSystem } from '@/src/features/play/effects/ParticleSy
 import { HUD } from '@/src/features/play/hud/HUD';
 import { BubbleSpawner, SpawnConfig } from '@/src/features/play/spawner/BubbleSpawner';
 import { useAppState } from '@/src/state';
-import { useGameplayStore } from '@/src/state/gameplay.slice';
+import { parseObjectives, useGameplayStore } from '@/src/state/gameplay.slice';
 import { useNavigation } from '@react-navigation/native';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -26,6 +29,7 @@ export default function Gameplay() {
   const [slowMoEnabled, setSlowMoEnabled] = useState(false);
   const [spawnRateMultiplier, setSpawnRateMultiplier] = useState(1.0);
   const [deterministicSeed, setDeterministicSeed] = useState(false);
+  const [showCompletionCard, setShowCompletionCard] = useState(false);
   const { colorAssist, reduceMotion, longPressMode } = useAppState();
   const params = useLocalSearchParams<{ theme?: string; objective?: string; level?: string }>();
   const selectedTheme = (params?.theme as string) || 'farm';
@@ -36,6 +40,8 @@ export default function Gameplay() {
     isPaused,
     bubbles,
     timeRemaining,
+    objectives,
+    levelCompleted,
     startGame,
     pauseGame,
     resumeGame,
@@ -45,6 +51,9 @@ export default function Gameplay() {
     updateBubbles,
     popBubble,
     setTimeRemaining,
+    setObjectives,
+    updateObjectiveProgress,
+    checkLevelCompletion,
     resetGame,
   } = useGameplayStore();
 
@@ -84,6 +93,14 @@ export default function Gameplay() {
     }
     directorRef.current = new Director({ minIntervalMs: Math.max(250, config.interval - 150), maxIntervalMs: config.interval, rampDurationMs: 45000 });
 
+    // Get level config for objectives
+    const levelConfig = getLevelConfig(level, SCREEN_WIDTH, SCREEN_HEIGHT);
+    if (levelConfig) {
+      const objectives = parseObjectives(levelConfig.objectives);
+      console.log('Setting objectives for level', level, ':', objectives);
+      setObjectives(objectives);
+    }
+
     // Reset gameplay state and start fresh
     const s = useGameplayStore.getState();
     s.updateBubbles([]);
@@ -91,7 +108,7 @@ export default function Gameplay() {
     s.startGame();
 
     setIsInitialized(true);
-  }, [level, selectedTheme]);
+  }, [level, selectedTheme, setObjectives]);
 
   // Create game loop when game starts
   useEffect(() => {
@@ -208,6 +225,79 @@ export default function Gameplay() {
     }
   };
 
+  const handleBubblePop = (bubble: Bubble) => {
+    // Pop the bubble
+    popBubble(bubble.id);
+    
+    // Update objective progress based on bubble type
+    if (objectives) {
+      // Primary objective: count all popped bubbles
+      updateObjectiveProgress('primary', 1);
+      console.log('Updated primary objective, bubble type:', bubble.type, 'size:', bubble.size);
+      
+      // Secondary objective: count specific bubble types
+      if (objectives.secondary) {
+        const secondaryDesc = objectives.secondary.description.toLowerCase();
+        console.log('Secondary objective description:', secondaryDesc);
+        
+        // Check for specific patterns in the secondary objective
+        if (bubble.type === 'item' && (secondaryDesc.includes('collect') || secondaryDesc.includes('farm items') || secondaryDesc.includes('seashells') || secondaryDesc.includes('candy treats') || secondaryDesc.includes('space items'))) {
+          updateObjectiveProgress('secondary', 1);
+          console.log('Updated secondary objective for item collection');
+        } else if (bubble.type === 'special' && (secondaryDesc.includes('find') || secondaryDesc.includes('rainbow') || secondaryDesc.includes('disco') || secondaryDesc.includes('giggle') || secondaryDesc.includes('freeze'))) {
+          updateObjectiveProgress('secondary', 1);
+          console.log('Updated secondary objective for special bubble');
+        } else if (bubble.size === 'large' && secondaryDesc.includes('large')) {
+          updateObjectiveProgress('secondary', 1);
+          console.log('Updated secondary objective for large bubble');
+        } else if (bubble.size === 'small' && secondaryDesc.includes('small')) {
+          updateObjectiveProgress('secondary', 1);
+          console.log('Updated secondary objective for small bubble');
+        } else if (bubble.type === 'avoider' && secondaryDesc.includes('avoid')) {
+          // Don't increment for avoiders, but we could track them separately
+          console.log('Avoider bubble detected');
+        } else if (secondaryDesc.includes('complete') && bubble.type === 'item') {
+          // For "Complete the collection" objectives, count items
+          updateObjectiveProgress('secondary', 1);
+          console.log('Updated secondary objective for collection completion');
+        }
+      }
+      
+      // Check if level is completed after updating objectives
+      setTimeout(() => {
+        const isCompleted = checkLevelCompletion();
+        console.log('Level completion check:', isCompleted, 'Objectives:', objectives);
+        if (isCompleted && !showCompletionCard) {
+          setShowCompletionCard(true);
+        }
+      }, 100);
+    }
+  };
+
+  const handleContinue = () => {
+    setShowCompletionCard(false);
+    endGame();
+    router.push({ pathname: '/play/results', params: { theme: selectedTheme, level: String(level) } });
+  };
+
+  const handleReplay = () => {
+    setShowCompletionCard(false);
+    // Reset objectives and continue playing
+    if (objectives) {
+      const levelConfig = getLevelConfig(level, SCREEN_WIDTH, SCREEN_HEIGHT);
+      if (levelConfig) {
+        const newObjectives = parseObjectives(levelConfig.objectives);
+        setObjectives(newObjectives);
+      }
+    }
+  };
+
+  const handleLevelSelect = () => {
+    setShowCompletionCard(false);
+    endGame();
+    router.push('/play/setup');
+  };
+
   return (
     <View style={styles.container}>
       <TouchableWithoutFeedback onPress={handleTap}>
@@ -239,7 +329,7 @@ export default function Gameplay() {
                     );
                     particleSystemRef.current.addParticles([...burstParticles, ...sparkleParticles]);
                   }
-                  popBubble(bubble.id);
+                  handleBubblePop(bubble);
                 }
               }}
               onLongPress={() => {
@@ -262,7 +352,7 @@ export default function Gameplay() {
                     );
                     particleSystemRef.current.addParticles([...burstParticles, ...sparkleParticles]);
                   }
-                  popBubble(bubble.id);
+                  handleBubblePop(bubble);
                 }
               }}
               delayLongPress={500} // 500ms long-press delay
@@ -319,8 +409,9 @@ export default function Gameplay() {
                       textShadowRadius: 2,
                       textAlign: 'center',
                     }}
+                    accessibilityLabel={getColorAssistGlyph(bubble).description}
                   >
-                    {getAssistGlyph(bubble)}
+                    {getColorAssistGlyph(bubble).symbol}
                   </RNText>
                 </View>
               )}
@@ -379,6 +470,31 @@ export default function Gameplay() {
             >
               {showDevToggles ? 'Hide' : 'Show'} Dev Toggles
             </Button>
+            <Button 
+              mode="text" 
+              onPress={() => setShowCompletionCard(true)}
+              style={styles.devToggleButton}
+            >
+              Test Completion
+            </Button>
+            <Button 
+              mode="text" 
+              onPress={() => {
+                if (objectives) {
+                  // Manually complete objectives for testing
+                  const testObjectives = {
+                    ...objectives,
+                    primary: { ...objectives.primary, current: objectives.primary.target, completed: true },
+                    secondary: objectives.secondary ? { ...objectives.secondary, current: objectives.secondary.target, completed: true } : undefined
+                  };
+                  setObjectives(testObjectives);
+                  setShowCompletionCard(true);
+                }
+              }}
+              style={styles.devToggleButton}
+            >
+              Complete Objectives
+            </Button>
           </View>
 
           {/* Dev Toggles Panel */}
@@ -435,6 +551,16 @@ export default function Gameplay() {
               </Card.Content>
             </Card>
           )}
+
+          {/* Level Completion Card */}
+          {showCompletionCard && objectives && (
+            <LevelCompletionCard
+              objectives={objectives}
+              onContinue={handleContinue}
+              onReplay={handleReplay}
+              onLevelSelect={handleLevelSelect}
+            />
+          )}
         </View>
       </TouchableWithoutFeedback>
     </View>
@@ -444,11 +570,9 @@ export default function Gameplay() {
 function getBubbleColor(bubble: Bubble): string {
   if (bubble.type === 'color' && bubble.color) {
     const colorMap: Record<string, string> = {
-      red: '#FF6F61',
-      blue: '#4A90E2',
+      blue: '#4A90E2', 
       green: '#7ED321',
       yellow: '#F5A623',
-      purple: '#9013FE',
       pink: '#FF69B4',
     };
     return colorMap[bubble.color] || '#CCCCCC';
@@ -461,99 +585,10 @@ function getBubbleColor(bubble: Bubble): string {
   return '#CCCCCC';
 }
 
-function getAssistGlyph(bubble: any): string {
-  // Comprehensive, accessible glyph palette for Color Assist
-  
-  // Color bubbles - distinct shapes for each color
-  if (bubble.type === 'color') {
-    switch (bubble.color) {
-      case 'red':
-        return '▲'; // Triangle - sharp, attention-grabbing
-      case 'blue':
-        return '■'; // Square - stable, reliable
-      case 'green':
-        return '●'; // Circle - natural, organic
-      case 'yellow':
-        return '◆'; // Diamond - bright, energetic
-      case 'purple':
-        return '★'; // Star - special, magical
-      case 'pink':
-        return '♥'; // Heart - warm, friendly
-      default:
-        return '●';
-    }
-  }
-  
-  // Item bubbles - different shapes for different items
-  if (bubble.type === 'item') {
-    switch (bubble.item) {
-      case 'flower':
-        return '✿'; // Flower symbol
-      case 'carrot':
-        return '🥕'; // Carrot emoji
-      case 'apple':
-        return '🍎'; // Apple emoji
-      case 'shell':
-        return '🐚'; // Shell emoji
-      case 'starfish':
-        return '⭐'; // Star emoji
-      case 'pail':
-        return '🪣'; // Bucket emoji
-      case 'lollipop':
-        return '🍭'; // Lollipop emoji
-      case 'jellybean':
-        return '🍬'; // Candy emoji
-      case 'cupcake':
-        return '🧁'; // Cupcake emoji
-      case 'star':
-        return '⭐'; // Star emoji
-      case 'planet':
-        return '🪐'; // Planet emoji
-      case 'comet':
-        return '☄️'; // Comet emoji
-      default:
-        return '🎁'; // Gift box for unknown items
-    }
-  }
-  
-  // Special bubbles - unique shapes for special effects
-  if (bubble.type === 'special') {
-    switch (bubble.special) {
-      case 'rainbow':
-        return '🌈'; // Rainbow
-      case 'disco':
-        return '💫'; // Sparkles
-      case 'giggle':
-        return '😄'; // Laughing face
-      case 'freeze':
-        return '❄️'; // Snowflake
-      default:
-        return '✨'; // Sparkles for unknown specials
-    }
-  }
-  
-  // Avoider bubbles - warning shapes
-  if (bubble.type === 'avoider') {
-    switch (bubble.avoider) {
-      case 'mud':
-        return '⚠️'; // Warning sign
-      case 'thorns':
-        return '🌵'; // Cactus
-      case 'slime':
-        return '🟢'; // Green circle (slime)
-      case 'ice':
-        return '🧊'; // Ice cube
-      default:
-        return '⚠️'; // Warning for unknown avoiders
-    }
-  }
-  
-  // Fallback
-  return '●';
-}
 
 function getBubbleImageSource(color?: string, size: 'small'|'medium'|'large' = 'medium') {
   // Use static requires per color/size so Metro bundles images
+  // Only use colors that have actual asset files
   if (size === 'small') {
     switch (color) {
       case 'blue':

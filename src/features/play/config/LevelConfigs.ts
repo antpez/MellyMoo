@@ -19,6 +19,7 @@ export interface LevelConfig {
 }
 
 // Theme-specific bubble configurations
+// Only using colors that have actual asset files: blue, green, pink, yellow
 const THEME_CONFIGS = {
   farm: {
     colors: ['blue', 'green', 'pink', 'yellow'] as const,
@@ -29,7 +30,7 @@ const THEME_CONFIGS = {
     accentColor: '#8BC34A',
   },
   beach: {
-    colors: ['blue', 'green', 'yellow', 'pink'] as const, // Using available colors
+    colors: ['blue', 'green', 'yellow', 'pink'] as const,
     items: ['shell', 'starfish', 'pail'],
     specials: ['disco'],
     avoiders: ['thorns'],
@@ -37,7 +38,7 @@ const THEME_CONFIGS = {
     accentColor: '#4FC3F7',
   },
   candy: {
-    colors: ['pink', 'purple', 'yellow', 'pink'] as const, // Using available colors
+    colors: ['pink', 'yellow', 'blue', 'green'] as const,
     items: ['lollipop', 'jellybean', 'cupcake'],
     specials: ['giggle'],
     avoiders: ['slime'],
@@ -45,7 +46,7 @@ const THEME_CONFIGS = {
     accentColor: '#E91E63',
   },
   space: {
-    colors: ['purple', 'blue', 'pink', 'yellow'] as const, // Using available colors
+    colors: ['blue', 'pink', 'yellow', 'green'] as const,
     items: ['star', 'planet', 'comet'],
     specials: ['freeze'],
     avoiders: ['ice'],

@@ -48,8 +48,6 @@ export default function GrownupsIndex() {
   const dynamicStyles = StyleSheet.create({
     container: {
       flex: 1,
-      padding: 16,
-      justifyContent: 'center',
       backgroundColor: isDark ? '#000000' : '#FFFFFF',
     },
     card: {

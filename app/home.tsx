@@ -36,14 +36,12 @@ export default function HomeScreen() {
     router.push('/play/setup');
   }
 
-  function handleLevelSelect() {
-    router.push('/play/setup');
-  }
+  
 
   const dynamicStyles = StyleSheet.create({
     container: {
       flex: 1,
-      padding: 16,
+      padding: 5,
       backgroundColor: isDark ? '#000000' : '#FFFFFF',
     },
     progressCard: {
@@ -110,10 +108,10 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         bounces={true}
       >
-        <View style={styles.logoContainer}>
+        <View style={styles.bannerContainer}>
           <Image
-            source={require('@/assets/images/mellymoo_logo.png')}
-            style={styles.logo}
+            source={require('@/assets/images/home_banner.png')}
+            style={styles.bannerImage}
             resizeMode="contain"
           />
         </View>
@@ -168,18 +166,6 @@ export default function HomeScreen() {
         </Button>
         
         <View style={styles.menuGrid}>
-          <Button 
-            mode="outlined" 
-            onPress={handleLevelSelect} 
-            style={[dynamicStyles.menuButton, { borderColor: '#2196F3', backgroundColor: isDark ? '#1B2D3D' : '#E3F2FD' }]}
-            icon="map"
-            contentStyle={styles.menuButtonContent}
-            textColor="#2196F3"
-            labelStyle={styles.menuButtonLabel}
-          >
-            Level Select
-          </Button>
-          
           <Button 
             mode="outlined" 
             onPress={() => router.push('/sticker-book')} 
@@ -254,21 +240,23 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingBottom: 20, // Extra padding at bottom for better scrolling
   },
-  logoContainer: {
+  bannerContainer: {
+    width: '100%',
+    height: 200,
+    marginBottom: 16,
+    paddingHorizontal: 10,
     alignItems: 'center',
-    paddingVertical: 16,
-    paddingTop: 20,
-    paddingBottom: 24,
+    justifyContent: 'center',
   },
-  logo: {
-    width: 240,
-    height: 140,
-    maxWidth: '85%',
+  bannerImage: {
+    width: '100%',
+    height: '100%',
   },
+  
   buttonContainer: {
     flex: 1,
     justifyContent: 'flex-start',
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingTop: 0,
   },
   playButtonContent: {

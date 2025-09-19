@@ -189,7 +189,7 @@ export default function Farmyard() {
     <View style={dynamicStyles.container}>
       <View style={styles.logoContainer}>
         <Image
-          source={require('@/assets/images/mellymoo_logo.png')}
+          source={require('@/assets/images/farmyard.png')}
           style={styles.logo}
           resizeMode="contain"
         />

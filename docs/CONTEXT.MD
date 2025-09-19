@@ -429,11 +429,10 @@ Based on the Open Tasks (MVP) section, here are the next logical steps:
    - ✅ Level select screen with visual completion indicators
    - ✅ Settings screen with progress reset option
    - ✅ Seamless continuation from where user left off
-   
-7. **Record VO** - Child-safe, warm tone voiceovers for key interactions
 
 **Low Priority:**
-7. **Advanced Features** - Multiplayer, advanced animations, etc.
+7. **Record VO** - Child-safe, warm tone voiceovers for key interactions
+8. **Advanced Features** - Multiplayer, advanced animations, etc.
 
 ### 21) Accessibility Test Checklist ✅ COMPLETED
 
@@ -475,4 +474,3 @@ Based on the Open Tasks (MVP) section, here are the next logical steps:
 4. Test with high contrast mode
 5. Test with large text sizes
 6. Test with one-handed operation
-

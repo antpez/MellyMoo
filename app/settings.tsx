@@ -1,4 +1,3 @@
-import { KeyboardDismissView } from '@/src/components/ui/KeyboardDismissView';
 import { useAppState, useProgressionStore } from '@/src/state';
 import Slider from '@react-native-community/slider';
 import { router } from 'expo-router';
@@ -66,14 +65,21 @@ export default function SettingsScreen() {
     <View style={dynamicStyles.container}>
       <View style={styles.logoContainer}>
         <Image
-          source={require('@/assets/images/mellymoo_logo.png')}
+          source={require('@/assets/images/settings.png')}
           style={styles.logo}
           resizeMode="contain"
         />
       </View>
 
-      <KeyboardDismissView style={{ flex: 1 }}>
-        <ScrollView>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        style={{ flex: 1 }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={true}
+        bounces={true}
+        scrollEventThrottle={16}
+        removeClippedSubviews={false}
+      >
           <List.Section>
         <List.Subheader>Audio</List.Subheader>
         <List.Item
@@ -187,8 +193,7 @@ export default function SettingsScreen() {
           />
         )}
       </List.Section>
-        </ScrollView>
-      </KeyboardDismissView>
+      </ScrollView>
     </View>
   );
 }
@@ -203,5 +208,9 @@ const styles = StyleSheet.create({
     width: 200,
     height: 120,
     maxWidth: '80%',
+  },
+  scrollContent: {
+    paddingBottom: 32,
+    flexGrow: 1,
   },
 });

@@ -2,7 +2,7 @@ import { generateLevelConfigs } from '@/src/features/play/config/LevelConfigs';
 import { useProgressionStore } from '@/src/state';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { Dimensions, ScrollView, StyleSheet, TouchableOpacity, useColorScheme, View } from 'react-native';
+import { Dimensions, Image, ScrollView, StyleSheet, TouchableOpacity, useColorScheme, View } from 'react-native';
 import { Button, Card, Text, useTheme } from 'react-native-paper';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -124,12 +124,6 @@ export default function PlaySetup() {
       backgroundColor: isDark ? '#0A0A0A' : '#F8F9FA',
       opacity: 0.3,
     },
-    title: {
-      textAlign: 'center',
-      marginBottom: 24,
-      fontWeight: 'bold',
-      color: isDark ? '#FFFFFF' : '#333',
-    },
     themeText: {
       color: isDark ? '#CCCCCC' : '#666',
       marginTop: 4,
@@ -139,7 +133,13 @@ export default function PlaySetup() {
   return (
     <View style={dynamicStyles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text variant="headlineSmall" style={dynamicStyles.title}>Choose Your Level</Text>
+        <View style={styles.titleContainer}>
+          <Image
+            source={require('@/assets/images/levels.png')}
+            style={styles.titleImage}
+            resizeMode="contain"
+          />
+        </View>
         
         {/* Level Map */}
         <View style={styles.mapContainer}>
@@ -286,6 +286,15 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 16,
     paddingBottom: 32,
+  },
+  titleContainer: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  titleImage: {
+    width: 200,
+    height: 120,
+    maxWidth: '80%',
   },
   mapContainer: {
     alignItems: 'center',

@@ -1,5 +1,5 @@
 export type BubbleType = 'color' | 'item' | 'special' | 'avoider';
-export type BubbleColor = 'red' | 'blue' | 'green' | 'yellow' | 'purple' | 'pink';
+export type BubbleColor = 'blue' | 'green' | 'pink' | 'yellow';
 
 export type Bubble = {
   id: string;
