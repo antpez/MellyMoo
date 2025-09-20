@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Dimensions, Image, ScrollView, StyleSheet, useColorScheme, View } from 'react-native';
 import { Button, Card, Text, useTheme } from 'react-native-paper';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -27,14 +28,15 @@ export default function HomeScreen() {
   }, [completedLevels, getNextLevel]);
 
   function handleContinue() {
-    // Navigate to play setup screen to continue from next level
-    router.push('/play/setup');
+    if (nextLevel) {
+      router.push(`/play/setup?level=${nextLevel}`);
+    }
   }
 
   function handleStartFresh() {
-    // Navigate to play setup screen
     router.push('/play/setup');
   }
+
 
   
 
@@ -63,19 +65,21 @@ export default function HomeScreen() {
       marginBottom: 4,
     },
     continueButton: {
-      marginBottom: 8,
-      paddingVertical: 10,
+      marginBottom: 16,
+      paddingVertical: 12,
+      paddingHorizontal: 20,
       borderRadius: 20,
       elevation: 6,
-      shadowColor: '#4CAF50',
+      shadowColor: '#2196F3',
       shadowOffset: { width: 0, height: 3 },
       shadowOpacity: 0.25,
       shadowRadius: 6,
-      backgroundColor: '#4CAF50',
+      backgroundColor: '#2196F3',
     },
     startFreshButton: {
       marginBottom: 16,
-      paddingVertical: 10,
+      paddingVertical: 12,
+      paddingHorizontal: 20,
       borderRadius: 20,
       elevation: 6,
       shadowColor: '#7A4CFF',
@@ -86,8 +90,8 @@ export default function HomeScreen() {
     },
     menuButton: {
       marginBottom: 6,
-      paddingVertical: 6,
-      paddingHorizontal: 12,
+      paddingVertical: 8,
+      paddingHorizontal: 16,
       borderRadius: 12,
       borderWidth: 1.5,
       borderColor: isDark ? '#333333' : '#E0E0E0',
@@ -101,7 +105,7 @@ export default function HomeScreen() {
   });
 
   return (
-    <View style={dynamicStyles.container}>
+    <SafeAreaView style={dynamicStyles.container} edges={['top', 'left', 'right']}>
       <ScrollView 
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -154,73 +158,75 @@ export default function HomeScreen() {
           </Button>
         )}
 
-        {/* Start Fresh Button */}
-        <Button 
-          mode="contained" 
-          onPress={handleStartFresh} 
-          style={dynamicStyles.startFreshButton}
-          icon="refresh"
-          contentStyle={styles.playButtonContent}
-        >
-          {hasProgress ? '🔄 Start Fresh' : '🎮 Play'}
-        </Button>
+        {/* Play Button - Only show if no Continue button is present */}
+        {!(hasProgress && nextLevel && isLevelUnlocked(nextLevel)) && (
+          <Button 
+            mode="contained" 
+            onPress={handleStartFresh} 
+            style={dynamicStyles.startFreshButton}
+            icon="play"
+            contentStyle={styles.playButtonContent}
+          >
+            🎮 Play
+          </Button>
+        )}
         
         <View style={styles.menuGrid}>
           <Button 
-            mode="outlined" 
+            mode="contained" 
             onPress={() => router.push('/sticker-book')} 
-            style={[dynamicStyles.menuButton, { borderColor: '#4CAF50', backgroundColor: isDark ? '#1B2D1B' : '#F1F8E9' }]}
+            style={[dynamicStyles.menuButton, { backgroundColor: '#E91E63' }]}
             icon="sticker-emoji"
             contentStyle={styles.menuButtonContent}
-            textColor="#4CAF50"
+            textColor="#FFFFFF"
             labelStyle={styles.menuButtonLabel}
           >
             Sticker Book
           </Button>
           
           <Button 
-            mode="outlined" 
+            mode="contained" 
             onPress={() => router.push('/farmyard')} 
-            style={[dynamicStyles.menuButton, { borderColor: '#8BC34A', backgroundColor: isDark ? '#1B2D1B' : '#F9FBE7' }]}
+            style={[dynamicStyles.menuButton, { backgroundColor: '#4CAF50' }]}
             icon="home"
             contentStyle={styles.menuButtonContent}
-            textColor="#8BC34A"
+            textColor="#FFFFFF"
             labelStyle={styles.menuButtonLabel}
           >
             Farmyard
           </Button>
           
           <Button 
-            mode="outlined" 
+            mode="contained" 
             onPress={() => router.push('/wardrobe')} 
-            style={[dynamicStyles.menuButton, { borderColor: '#9C27B0', backgroundColor: isDark ? '#2D1B2D' : '#F3E5F5' }]}
+            style={[dynamicStyles.menuButton, { backgroundColor: '#9C27B0' }]}
             icon="tshirt-crew"
             contentStyle={styles.menuButtonContent}
-            textColor="#9C27B0"
+            textColor="#FFFFFF"
             labelStyle={styles.menuButtonLabel}
           >
             Wardrobe
           </Button>
           
           <Button 
-            mode="outlined" 
+            mode="contained" 
             onPress={() => router.push('/settings')} 
-            style={[dynamicStyles.menuButton, { borderColor: '#607D8B', backgroundColor: isDark ? '#1B1B2D' : '#ECEFF1' }]}
+            style={[dynamicStyles.menuButton, { backgroundColor: '#607D8B' }]}
             icon="cog"
             contentStyle={styles.menuButtonContent}
-            textColor="#607D8B"
+            textColor="#FFFFFF"
             labelStyle={styles.menuButtonLabel}
           >
             Settings
           </Button>
           
           <Button 
-            mode="outlined" 
+            mode="contained" 
             onPress={() => router.push('/grownups')} 
-            style={[dynamicStyles.menuButton, { borderColor: '#FF9800', backgroundColor: isDark ? '#2D1B0B' : '#FFF3E0' }]}
+            style={[dynamicStyles.menuButton, { backgroundColor: '#FF9800' }]}
             icon="shield-account"
             contentStyle={styles.menuButtonContent}
-            textColor="#FF9800"
+            textColor="#FFFFFF"
             labelStyle={styles.menuButtonLabel}
           >
             Grown-ups
@@ -228,7 +234,7 @@ export default function HomeScreen() {
         </View>
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -260,14 +266,14 @@ const styles = StyleSheet.create({
     paddingTop: 0,
   },
   playButtonContent: {
-    paddingVertical: 6,
+    paddingVertical: 8,
   },
   menuGrid: {
     gap: 8,
     marginBottom: 16,
   },
   menuButtonContent: {
-    paddingVertical: 2,
+    paddingVertical: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-start',

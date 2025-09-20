@@ -3,6 +3,7 @@ import { useWardrobeStore } from '@/src/services/wardrobe';
 import React, { useState } from 'react';
 import { Image, ScrollView, StyleSheet, useColorScheme, View } from 'react-native';
 import { Button, Card, Text, useTheme } from 'react-native-paper';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function Wardrobe() {
   const colorScheme = useColorScheme();
@@ -21,14 +22,14 @@ export default function Wardrobe() {
   const getCowImage = (pose: string) => {
     switch (pose) {
       case 'shocked':
-        return require('@/assets/images/cow_shocked.png');
+        return require('@/assets/cow/cow_shocked.png');
       case 'sitting':
-        return require('@/assets/images/cow_happy.png'); // Using cow_happy.png for sitting pose
+        return require('@/assets/cow/cow_sitting_happy.png');
       case 'waving':
-        return require('@/assets/images/cow_waving.png');
+        return require('@/assets/cow/cow_standing_waving.png');
       case 'normal':
       default:
-        return require('@/assets/images/cow.png'); // Using cow.png for normal pose
+        return require('@/assets/cow/cow_standing.png');
     }
   };
 
@@ -43,7 +44,7 @@ export default function Wardrobe() {
   });
 
   return (
-    <View style={dynamicStyles.container}>
+    <SafeAreaView style={dynamicStyles.container} edges={['top', 'left', 'right']}>
       <View style={styles.logoContainer}>
         <Image
           source={require('@/assets/images/wardrobe.png')}
@@ -137,7 +138,7 @@ export default function Wardrobe() {
           ))
         )}
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 

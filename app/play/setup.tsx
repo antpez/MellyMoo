@@ -1,9 +1,11 @@
 import { generateLevelConfigs } from '@/src/features/play/config/LevelConfigs';
 import { useProgressionStore } from '@/src/state';
-import { router } from 'expo-router';
-import React, { useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { router, useLocalSearchParams } from 'expo-router';
+import React, { useEffect, useState } from 'react';
 import { Dimensions, Image, ScrollView, StyleSheet, TouchableOpacity, useColorScheme, View } from 'react-native';
-import { Button, Card, Text, useTheme } from 'react-native-paper';
+import { Button, Card, Dialog, Portal, Text, TextInput, useTheme } from 'react-native-paper';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -67,12 +69,40 @@ export default function PlaySetup() {
   const paperTheme = useTheme();
   const isDark = colorScheme === 'dark';
   const { isLevelUnlocked, getLevelProgress, setCurrentLevel } = useProgressionStore();
-
+  const params = useLocalSearchParams<{ level?: string }>();
+  
+  // Get level from URL params or default to 1
+  const urlLevel = params?.level ? Number(params.level) : 1;
+  
   const [gameTheme, setGameTheme] = useState<string>('farm');
-  const [selectedLevel, setSelectedLevel] = useState<number>(1);
+  const [selectedLevel, setSelectedLevel] = useState<number>(urlLevel);
+  const [nameDialogVisible, setNameDialogVisible] = useState(false);
+  const [nameInput, setNameInput] = useState('');
   
   // Default objective - will be implemented later
   const objective = 'surprise';
+
+  // Check for stored name on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const stored = await AsyncStorage.getItem('user-display-name');
+        if (!stored) {
+          setNameDialogVisible(true);
+        }
+      } catch {}
+    })();
+  }, []);
+
+  // Update selected level and theme when URL params change
+  useEffect(() => {
+    if (urlLevel && urlLevel !== selectedLevel) {
+      setSelectedLevel(urlLevel);
+      // Auto-select theme based on level
+      const levelTheme = levelPositions.find(p => p.level === urlLevel)?.theme || 'farm';
+      setGameTheme(levelTheme);
+    }
+  }, [urlLevel, selectedLevel]);
 
   const handleLevelSelect = (level: number) => {
     // Only allow selecting unlocked levels
@@ -93,6 +123,16 @@ export default function PlaySetup() {
         params: { theme: gameTheme, objective, level: String(selectedLevel) }
       });
     }
+  };
+
+  const handleSaveName = async () => {
+    const trimmed = nameInput.trim();
+    if (!trimmed) return;
+    try {
+      await AsyncStorage.setItem('user-display-name', trimmed);
+      setNameDialogVisible(false);
+      setNameInput('');
+    } catch {}
   };
 
   const dynamicStyles = StyleSheet.create({
@@ -131,7 +171,7 @@ export default function PlaySetup() {
   });
 
   return (
-    <View style={dynamicStyles.container}>
+    <SafeAreaView style={dynamicStyles.container} edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.titleContainer}>
           <Image
@@ -278,7 +318,28 @@ export default function PlaySetup() {
           {isLevelUnlocked(selectedLevel) ? `Start Level ${selectedLevel}` : `Level ${selectedLevel} Locked`}
         </Button>
       </ScrollView>
-    </View>
+
+      {/* First-time name prompt */}
+      <Portal>
+        <Dialog visible={nameDialogVisible} onDismiss={() => setNameDialogVisible(false)}>
+          <Dialog.Title>What is your name?</Dialog.Title>
+          <Dialog.Content>
+            <TextInput
+              label="Your name"
+              value={nameInput}
+              onChangeText={setNameInput}
+              autoFocus
+              returnKeyType="done"
+              onSubmitEditing={() => handleSaveName()}
+            />
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setNameDialogVisible(false)}>Cancel</Button>
+            <Button onPress={() => handleSaveName()} disabled={!nameInput.trim()}>Save</Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
+    </SafeAreaView>
   );
 }
 

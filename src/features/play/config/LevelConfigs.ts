@@ -90,8 +90,8 @@ export function generateLevelConfigs(screenWidth: number, screenHeight: number):
       
       // Probability progression: introduce items, specials, and avoiders gradually
       const probabilities = {
-        color: 1.0 - (0.3 * t) - (0.1 * globalT), // 1.0 → 0.6
-        item: 0.0 + (0.15 * t) + (0.05 * globalT), // 0.0 → 0.2
+        color: 1.0 - (0.2 * t) - (0.1 * globalT), // 1.0 → 0.7 (more color bubbles for level 1)
+        item: globalLevel === 1 ? 0.0 : 0.1 + (0.15 * t) + (0.05 * globalT), // 0% for level 1, then 0.1 → 0.3
         special: 0.0 + (0.1 * t) + (0.05 * globalT), // 0.0 → 0.15
         avoider: 0.0 + (0.05 * t) + (0.05 * globalT), // 0.0 → 0.1
       };
@@ -170,7 +170,7 @@ function getLevelDescription(theme: Theme, levelInTheme: number): string {
 function getLevelObjectives(theme: Theme, levelInTheme: number): { primary: string; secondary?: string } {
   const objectives = {
     farm: [
-      { primary: "Pop 20 colorful bubbles", secondary: "Collect 3 farm items" },
+      { primary: "Pop 15 colorful bubbles" },
       { primary: "Pop 30 bubbles", secondary: "Avoid mud bubbles" },
       { primary: "Pop 25 bubbles", secondary: "Find 2 rainbow bubbles" },
       { primary: "Pop 35 bubbles", secondary: "Pop 5 large bubbles" },

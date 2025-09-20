@@ -86,6 +86,7 @@ export class BubbleSpawner {
       
       case 'item':
         const itemKey = this.getRandomItem();
+        console.log('Spawning item bubble:', itemKey, 'size:', size);
         return BubbleController.create(id, 'item', x, y, undefined, itemKey, -speedBySize, size);
       
       case 'special':

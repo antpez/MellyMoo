@@ -2,6 +2,7 @@ import { useInventoryStore } from '@/src/services/inventory';
 import React, { useState } from 'react';
 import { Dimensions, Image, ScrollView, StyleSheet, useColorScheme, View } from 'react-native';
 import { Card, Chip, SegmentedButtons, Text, useTheme } from 'react-native-paper';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -182,7 +183,7 @@ export default function StickerBook() {
   });
 
   return (
-    <View style={dynamicStyles.container}>
+    <SafeAreaView style={dynamicStyles.container} edges={['top', 'left', 'right']}>
       <View style={styles.logoContainer}>
         <Image
           source={require('@/assets/images/stickers.png')}
@@ -312,7 +313,7 @@ export default function StickerBook() {
           </Card.Content>
         </Card>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 

@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, Image, ScrollView, StyleSheet, useColorScheme, View } from 'react-native';
 import { Button, Divider, List, Switch, useTheme } from 'react-native-paper';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function SettingsScreen() {
   const colorScheme = useColorScheme();
@@ -31,22 +32,22 @@ export default function SettingsScreen() {
 
   const handleResetProgress = () => {
     Alert.alert(
-      "Reset Progress",
-      "Are you sure you want to reset all your game progress? This will delete all completed levels and start you from the beginning. This action cannot be undone.",
+      "Start Fresh",
+      "Are you sure you want to start fresh? This will reset all your game progress and start you from Level 1. This action cannot be undone.",
       [
         {
           text: "Cancel",
           style: "cancel"
         },
         {
-          text: "Reset",
+          text: "Start Fresh",
           style: "destructive",
           onPress: () => {
             setIsResetting(true);
             resetProgression();
             setTimeout(() => {
               setIsResetting(false);
-              Alert.alert("Progress Reset", "Your game progress has been reset. You can now start fresh from Level 1.");
+              Alert.alert("Started Fresh", "Your game progress has been reset. You can now start fresh from Level 1.");
             }, 500);
           }
         }
@@ -62,7 +63,7 @@ export default function SettingsScreen() {
   });
 
   return (
-    <View style={dynamicStyles.container}>
+    <SafeAreaView style={dynamicStyles.container} edges={['top', 'left', 'right']}>
       <View style={styles.logoContainer}>
         <Image
           source={require('@/assets/images/settings.png')}
@@ -174,27 +175,25 @@ export default function SettingsScreen() {
           title={`Completed Levels: ${completedLevels.length}/20`}
           description="Your current progress through the game"
         />
-        {completedLevels.length > 0 && (
-          <List.Item
-            title="Reset Progress"
-            description="Start over from Level 1"
-            right={() => (
-              <Button 
-                mode="outlined" 
-                onPress={handleResetProgress}
-                disabled={isResetting}
-                buttonColor={isDark ? '#2D1B1B' : '#FFF5F5'}
-                textColor="#FF6F61"
-                compact
-              >
-                {isResetting ? 'Resetting...' : 'Reset'}
-              </Button>
-            )}
-          />
-        )}
+        <List.Item
+          title="Start Fresh"
+          description={completedLevels.length > 0 ? "Reset progress and start from Level 1" : "Start a new game from Level 1"}
+          right={() => (
+            <Button 
+              mode="outlined" 
+              onPress={handleResetProgress}
+              disabled={isResetting}
+              buttonColor={isDark ? '#2D1B1B' : '#FFF5F5'}
+              textColor="#FF6F61"
+              compact
+            >
+              {isResetting ? 'Starting...' : 'Start Fresh'}
+            </Button>
+          )}
+        />
       </List.Section>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 

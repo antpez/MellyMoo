@@ -15,6 +15,7 @@ import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Dimensions, Image, Pressable, Text as RNText, StyleSheet, TouchableWithoutFeedback, View } from 'react-native';
 import { Button, Card, Divider, Switch, Text } from 'react-native-paper';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -299,7 +300,7 @@ export default function Gameplay() {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <TouchableWithoutFeedback onPress={handleTap}>
         <View style={styles.gameArea}>
           {/* Render bubbles */}
@@ -563,7 +564,7 @@ export default function Gameplay() {
           )}
         </View>
       </TouchableWithoutFeedback>
-    </View>
+    </SafeAreaView>
   );
 }
 

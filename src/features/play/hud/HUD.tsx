@@ -13,18 +13,42 @@ export function HUD({ onPause }: HUDProps) {
     timeRemaining, 
     maxTime, 
     stickersFound, 
-    bubbles 
+    bubbles,
+    objectives
   } = useGameplayStore();
 
   const timeProgress = timeRemaining / maxTime;
   const friendMeter = Math.min(bubbles.length / 10, 1); // Fill as more bubbles appear
+  
+  // Calculate objective progress
+  const primaryProgress = objectives?.primary ? objectives.primary.current / objectives.primary.target : 0;
+  const secondaryProgress = objectives?.secondary ? objectives.secondary.current / objectives.secondary.target : 0;
 
   return (
     <View style={styles.container}>
       {/* Top Row */}
       <View style={styles.topRow}>
         <View style={styles.objectiveContainer}>
-          <Text variant="bodyMedium">🎯 Color Match</Text>
+          <Text variant="bodySmall" style={styles.objectiveText}>
+            🎯 {objectives?.primary?.description || 'Pop bubbles'}
+          </Text>
+          <ProgressBar 
+            progress={Math.min(primaryProgress, 1)} 
+            color="#4CAF50" 
+            style={styles.objectiveBar}
+          />
+          {objectives?.secondary && (
+            <>
+              <Text variant="bodySmall" style={styles.objectiveText}>
+                ⭐ {objectives.secondary.description}
+              </Text>
+              <ProgressBar 
+                progress={Math.min(secondaryProgress, 1)} 
+                color="#FF9800" 
+                style={styles.objectiveBar}
+              />
+            </>
+          )}
         </View>
         <View style={styles.timerContainer}>
           <ProgressBar 
@@ -105,6 +129,15 @@ const styles = StyleSheet.create({
   },
   objectiveContainer: {
     flex: 1,
+  },
+  objectiveText: {
+    fontSize: 10,
+    marginBottom: 2,
+  },
+  objectiveBar: {
+    height: 4,
+    borderRadius: 2,
+    marginBottom: 4,
   },
   timerContainer: {
     flex: 2,

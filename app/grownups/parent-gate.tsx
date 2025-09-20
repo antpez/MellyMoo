@@ -2,8 +2,9 @@ import { KeyboardDismissView } from '@/src/components/ui/KeyboardDismissView';
 import { ParentGateService } from '@/src/services/parent-gate';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
+import { Image, ScrollView, StyleSheet, View } from 'react-native';
 import { Button, Card, Text, TextInput } from 'react-native-paper';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 // Array of parent gate challenges
 const challenges = [
@@ -13,153 +14,183 @@ const challenges = [
   { question: 'What is 20 ÷ 4?', answer: '5' },
   { question: 'What is 9 + 6?', answer: '15' },
   { question: 'What is 12 - 5?', answer: '7' },
-  { question: 'What is 3 × 4?', answer: '12' },
+  { question: 'What is 6 × 2?', answer: '12' },
   { question: 'What is 18 ÷ 3?', answer: '6' },
+  { question: 'What is 8 + 9?', answer: '17' },
+  { question: 'What is 14 - 6?', answer: '8' },
+  { question: 'What is 5 × 4?', answer: '20' },
+  { question: 'What is 24 ÷ 6?', answer: '4' },
+  { question: 'What is 11 + 7?', answer: '18' },
+  { question: 'What is 16 - 9?', answer: '7' },
+  { question: 'What is 3 × 7?', answer: '21' },
+  { question: 'What is 30 ÷ 5?', answer: '6' },
+  { question: 'What is 13 + 8?', answer: '21' },
+  { question: 'What is 22 - 7?', answer: '15' },
+  { question: 'What is 4 × 6?', answer: '24' },
+  { question: 'What is 36 ÷ 9?', answer: '4' },
 ];
 
-export default function ParentGate() {
-  const [answer, setAnswer] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [currentChallenge, setCurrentChallenge] = useState(challenges[0]);
+export default function ParentGateScreen() {
+  const [currentChallenge, setCurrentChallenge] = useState(0);
+  const [userAnswer, setUserAnswer] = useState('');
   const [attempts, setAttempts] = useState(0);
+  const [isVerifying, setIsVerifying] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
 
-  // Check if parent is already verified
   useEffect(() => {
-    checkParentVerification();
+    checkVerificationStatus();
   }, []);
 
-  async function checkParentVerification() {
+  async function checkVerificationStatus() {
     const verified = await ParentGateService.isParentVerified();
     if (verified) {
       setIsVerified(true);
-      router.replace('/grownups/shop');
+      setIsVerifying(true);
+      // Redirect to grownups index after a short delay
+      setTimeout(() => {
+        router.replace('/grownups');
+      }, 2000);
     }
   }
 
   function getRandomChallenge() {
     const randomIndex = Math.floor(Math.random() * challenges.length);
-    return challenges[randomIndex];
+    setCurrentChallenge(randomIndex);
+    setUserAnswer('');
   }
 
   function handleSubmit() {
-    const trimmedAnswer = answer.trim();
+    const correctAnswer = challenges[currentChallenge].answer;
     
-    if (trimmedAnswer === currentChallenge.answer) {
-      // Correct answer - verify parent and store verification
-      verifyParent();
+    if (userAnswer.trim() === correctAnswer) {
+      // Correct answer - verify parent
+      ParentGateService.verifyParent();
+      setIsVerified(true);
+      setIsVerifying(true);
+      // Redirect to grownups index after a short delay
+      setTimeout(() => {
+        router.replace('/grownups');
+      }, 2000);
     } else {
-      // Incorrect answer
-      setAttempts(prev => prev + 1);
-      setError(`Incorrect answer. Please try again. (Attempt ${attempts + 1}/3)`);
-      setAnswer('');
+      // Wrong answer - increment attempts and get new challenge
+      const newAttempts = attempts + 1;
+      setAttempts(newAttempts);
       
-      if (attempts >= 2) {
-        // Too many attempts - reset and show new challenge
+      if (newAttempts >= 3) {
+        // Too many attempts - get a new challenge
         setAttempts(0);
-        setCurrentChallenge(getRandomChallenge());
-        setError('Too many incorrect attempts. Here\'s a new question.');
+        getRandomChallenge();
+      } else {
+        // Try again with same challenge
+        setUserAnswer('');
       }
     }
   }
 
-  async function verifyParent() {
-    const success = await ParentGateService.verifyParent();
-    if (success) {
-      router.replace('/grownups/shop');
-    } else {
-      setError('Verification failed. Please try again.');
-    }
-  }
-
-  function handleNewChallenge() {
-    setCurrentChallenge(getRandomChallenge());
-    setAnswer('');
-    setError(null);
-    setAttempts(0);
-  }
-
-  if (isVerified) {
+  if (isVerifying) {
     return (
+      <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
+        <KeyboardDismissView style={{ flex: 1 }}>
+          <View style={styles.logoContainer}>
+            <Image
+              source={require('@/assets/images/grownups.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+          </View>
+          <ScrollView 
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            bounces={true}
+          >
+            <Text variant="headlineMedium" style={{ marginBottom: 16 }}>Verifying...</Text>
+            <Text>Please wait while we verify your access.</Text>
+          </ScrollView>
+        </KeyboardDismissView>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
       <KeyboardDismissView style={{ flex: 1 }}>
+        <View style={styles.logoContainer}>
+          <Image
+            source={require('@/assets/images/grownups.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+        </View>
         <ScrollView 
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           bounces={true}
         >
-          <Text variant="headlineMedium" style={{ marginBottom: 16 }}>Verifying...</Text>
-          <Text>Please wait while we verify your access.</Text>
+          <Card style={{ padding: 20, marginBottom: 20 }}>
+            <Text variant="headlineMedium" style={{ marginBottom: 16, textAlign: 'center' }}>
+              Parent Verification
+            </Text>
+            <Text style={{ marginBottom: 24, textAlign: 'center' }}>
+              Please answer the following math question to verify you are a parent or guardian:
+            </Text>
+            
+            <Text variant="titleLarge" style={{ marginBottom: 16, textAlign: 'center', fontWeight: 'bold' }}>
+              {challenges[currentChallenge].question}
+            </Text>
+            
+            <TextInput
+              label="Your answer"
+              value={userAnswer}
+              onChangeText={setUserAnswer}
+              keyboardType="numeric"
+              style={{ marginBottom: 16 }}
+              autoFocus
+              returnKeyType="done"
+              onSubmitEditing={handleSubmit}
+            />
+            
+            <Button 
+              mode="contained" 
+              onPress={handleSubmit}
+              disabled={!userAnswer.trim()}
+              style={{ marginBottom: 12 }}
+            >
+              Submit Answer
+            </Button>
+            
+            {attempts > 0 && (
+              <Text style={{ textAlign: 'center', color: '#FF6F61' }}>
+                Incorrect answer. Attempts: {attempts}/3
+              </Text>
+            )}
+            
+            <Button 
+              mode="text" 
+              onPress={getRandomChallenge}
+              style={{ marginTop: 8 }}
+            >
+              New Question
+            </Button>
+          </Card>
         </ScrollView>
       </KeyboardDismissView>
-    );
-  }
-
-  return (
-    <KeyboardDismissView style={{ flex: 1 }}>
-      <ScrollView 
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        bounces={true}
-      >
-        <Card style={{ padding: 20, marginBottom: 20 }}>
-          <Text variant="headlineMedium" style={{ marginBottom: 16, textAlign: 'center' }}>
-            Parent Verification
-          </Text>
-          <Text style={{ marginBottom: 24, textAlign: 'center' }}>
-            This area is for parents and guardians only. Please answer the math question below to continue.
-          </Text>
-          
-          <Text variant="titleLarge" style={{ marginBottom: 16, textAlign: 'center' }}>
-            {currentChallenge.question}
-          </Text>
-          
-          <TextInput
-            label="Your Answer"
-            value={answer}
-            onChangeText={setAnswer}
-            keyboardType="numeric"
-            style={{ marginBottom: 16 }}
-            accessibilityLabel="Enter your answer to the math question"
-          />
-          
-          {error ? (
-            <Text style={{ color: 'red', marginBottom: 16, textAlign: 'center' }}>
-              {error}
-            </Text>
-          ) : null}
-          
-          <Button 
-            mode="contained" 
-            onPress={handleSubmit}
-            style={{ marginBottom: 12 }}
-            accessibilityLabel="Submit your answer"
-          >
-            Submit Answer
-          </Button>
-          
-          <Button 
-            mode="outlined" 
-            onPress={handleNewChallenge}
-            accessibilityLabel="Get a new math question"
-          >
-            New Question
-          </Button>
-        </Card>
-        
-        <Text variant="bodySmall" style={{ textAlign: 'center', color: '#666' }}>
-          Verification expires after 24 hours for security.
-        </Text>
-      </ScrollView>
-    </KeyboardDismissView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
+  logoContainer: {
     alignItems: 'center',
     paddingVertical: 20,
     paddingHorizontal: 16,
+  },
+  logo: {
+    width: 200,
+    height: 120,
+    maxWidth: '80%',
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 32,
   },
 });

@@ -5,6 +5,7 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useColorScheme } from '@/components/useColorScheme';
 import '@/src/lib/i18n';
@@ -57,26 +58,28 @@ function RootLayoutNav() {
   const paperTheme = usePaperTheme();
 
   return (
-    <PaperProvider theme={paperTheme}>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack>
-          <Stack.Screen name="index" options={{ headerShown: false }} />
-          <Stack.Screen name="home" options={{ title: 'Home' }} />
-          <Stack.Screen name="children" options={{ title: 'Children' }} />
-          <Stack.Screen name="settings" options={{ title: 'Settings' }} />
-          <Stack.Screen name="sticker-book" options={{ title: 'Sticker Book' }} />
-          <Stack.Screen name="farmyard" options={{ title: 'Farmyard' }} />
-          <Stack.Screen name="wardrobe" options={{ title: 'Wardrobe' }} />
-          <Stack.Screen 
-            name="play" 
-            options={{ 
-              headerShown: false,
-            }} 
-          />
-          <Stack.Screen name="grownups" options={{ headerShown: false }} />
-          <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-        </Stack>
-      </ThemeProvider>
-    </PaperProvider>
+    <SafeAreaProvider>
+      <PaperProvider theme={paperTheme}>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <Stack>
+            <Stack.Screen name="index" options={{ headerShown: false }} />
+            <Stack.Screen name="home" options={{ headerShown: false }} />
+            <Stack.Screen name="children" options={{ headerShown: false }} />
+            <Stack.Screen name="settings" options={{ headerShown: false }} />
+            <Stack.Screen name="sticker-book" options={{ headerShown: false }} />
+            <Stack.Screen name="farmyard" options={{ headerShown: false }} />
+            <Stack.Screen name="wardrobe" options={{ headerShown: false }} />
+            <Stack.Screen 
+              name="play" 
+              options={{ 
+                headerShown: false,
+              }} 
+            />
+            <Stack.Screen name="grownups" options={{ headerShown: false }} />
+            <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+          </Stack>
+        </ThemeProvider>
+      </PaperProvider>
+    </SafeAreaProvider>
   );
 }
